@@ -46,14 +46,14 @@ public interface RfLinkMessage {
      *
      * @return device Id.
      */
-    String getDeviceId() throws RfLinkException;
+    String getDeviceIdKey() throws RfLinkException;
 
     /**
      * Procedure to get device name.
      *
      * @return device Name.
      */
-    String getDeviceName();
+    String getProtocol();
 
     /**
      * Procedure to thingType linked to message.

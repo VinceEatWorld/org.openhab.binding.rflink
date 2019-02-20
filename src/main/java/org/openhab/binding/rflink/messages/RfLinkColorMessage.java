@@ -80,10 +80,6 @@ public class RfLinkColorMessage extends RfLinkBaseMessage {
         logger.debug("Color Encode data: [{}]", data);
         super.encodeMessage(data);
 
-        if (values.containsKey(KEY_SWITCH)) {
-            this.deviceId += ID_DELIMITER + values.get(KEY_SWITCH);
-        }
-
         if (values.containsKey(KEY_RGBW)) {
             String rgbw = values.get(KEY_RGBW);
             int color = Integer.parseInt(rgbw.substring(0, 2), 16);

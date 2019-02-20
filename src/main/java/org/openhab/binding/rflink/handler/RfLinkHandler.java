@@ -144,7 +144,7 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
     public void onDeviceMessageReceived(ThingUID bridge, RfLinkMessage message) {
 
         try {
-            String id = message.getDeviceId();
+            String id = message.getDeviceIdKey();
             // logger.debug("Matching Message from bridge {} from device [{}] with [{}]", bridge.toString(), id,
             // config.deviceId);
             if (config.deviceId.equals(id)) {

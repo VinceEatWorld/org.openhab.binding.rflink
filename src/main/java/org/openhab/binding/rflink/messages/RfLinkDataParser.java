@@ -18,6 +18,10 @@ public class RfLinkDataParser {
     public static final int BASE_TEN = 10;
     public static final int BASE_HEXA = 16;
 
+    public static String cleanString(String value) {
+        return value.replaceAll("[^A-Za-z0-9_-]", "");
+    }
+
     public static int parseToInt(String value) {
         return Integer.parseInt(value, BASE_TEN);
     }

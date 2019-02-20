@@ -89,10 +89,6 @@ public class RfLinkSwitchMessage extends RfLinkBaseMessage {
             }
             contact = RfLinkTypeUtils.getSynonym(command, OpenClosedType.class);
         }
-
-        if (values.containsKey(KEY_SWITCH)) {
-            this.deviceId += ID_DELIMITER + values.get(KEY_SWITCH);
-        }
     }
 
     private Integer getDimmingValue(String value) {

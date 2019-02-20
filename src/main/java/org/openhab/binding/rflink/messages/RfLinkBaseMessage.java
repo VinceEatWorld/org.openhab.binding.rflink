@@ -47,8 +47,9 @@ public abstract class RfLinkBaseMessage implements RfLinkMessage {
 
     public String rawMessage;
     private byte seqNbr = 0;
-    private String deviceName;
-    protected String deviceId;
+    private String protocol; // protocol Name (RTS, X10, etc.)
+    protected String deviceId; // device Identifier (Rolling code, etc.)
+    protected String deviceSubId; // switch Identifier (SWITCH=XX, etc.)
     protected Boolean isCommandReversed;
 
     protected Map<String, String> values = new HashMap<>();
@@ -80,7 +81,7 @@ public abstract class RfLinkBaseMessage implements RfLinkMessage {
             // first element should be "20"
             if (NODE_NUMBER_FROM_GATEWAY.equals(elements[0])) {
                 seqNbr = (byte) Integer.parseInt(elements[1], 16);
-                deviceName = elements[2].replaceAll("[^A-Za-z0-9_-]", "");
+                protocol = RfLinkDataParser.cleanString(elements[2]);
                 // build the key>value map
                 for (int i = 3; i < size; i++) {
                     String[] keyValue = elements[i].split(VALUE_DELIMITER, 2);
@@ -90,6 +91,7 @@ public abstract class RfLinkBaseMessage implements RfLinkMessage {
                     }
                 }
                 deviceId = values.get("ID");
+                deviceSubId = values.get("SWITCH");
             }
         }
     }
@@ -100,22 +102,27 @@ public abstract class RfLinkBaseMessage implements RfLinkMessage {
         if (rawMessage == null) {
             str += "Raw data = unknown";
         } else {
-            str += "Raw data = " + new String(rawMessage);
-            str += ", Seq number = " + (short) (seqNbr & 0xFF);
-            str += ", Device name = " + deviceName;
-            str += ", Device ID = " + deviceId;
+            str += "Raw= " + new String(rawMessage);
+            str += ", Seq= " + (short) (seqNbr & 0xFF);
+            str += ", Protocol= " + protocol;
+            str += ", Device= " + deviceId;
+            str += ", Switch=" + deviceSubId;
         }
         return str;
     }
 
     @Override
-    public String getDeviceId() {
-        return deviceName + ID_DELIMITER + deviceId;
+    public String getDeviceIdKey() {
+        String deviceIdKey = protocol + ID_DELIMITER + deviceId;
+        if (deviceSubId != null) {
+            deviceIdKey += ID_DELIMITER + deviceSubId;
+        }
+        return deviceIdKey;
     }
 
     @Override
-    public String getDeviceName() {
-        return deviceName;
+    public String getProtocol() {
+        return protocol;
     }
 
     @Override
@@ -136,9 +143,12 @@ public abstract class RfLinkBaseMessage implements RfLinkMessage {
     public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
             throws RfLinkNotImpException, RfLinkException {
         String[] elements = config.deviceId.split(ID_DELIMITER);
-        if (elements.length >= 2) {
-            this.deviceName = elements[0];
-            this.deviceId = config.deviceId.substring(this.deviceName.length() + ID_DELIMITER.length());
+        if (elements.length > 1) {
+            this.protocol = elements[0];
+            this.deviceId = elements[1];
+            if (elements.length > 2) {
+                this.deviceSubId = elements[2];
+            }
         }
         this.isCommandReversed = config.isCommandReversed;
     }
@@ -154,30 +164,22 @@ public abstract class RfLinkBaseMessage implements RfLinkMessage {
     }
 
     public String buildMessage(String suffix) {
-        // prepare data
-        String[] deviceIdParts = this.deviceId.split(ID_DELIMITER, 2);
-        String channel = deviceIdParts[0];
-        String channelSuffix = null;
-        if (deviceIdParts.length > 1) {
-            channelSuffix = deviceIdParts[1].replaceAll(ID_DELIMITER, FIELDS_DELIMITER);
-        }
-
         // encode the message
         StringBuilder message = new StringBuilder();
         appendToMessage(message, NODE_NUMBER_TO_GATEWAY); // To Bridge
-        appendToMessage(message, this.getDeviceName()); // Protocol
+        appendToMessage(message, this.getProtocol()); // Protocol
         // convert channel to 8 character string, RfLink spec is a bit unclear on this, but seems to work...
-        appendToMessage(message, DEVICE_MASK.substring(channel.length()) + channel);
-        if (channelSuffix != null) {
-            // some protocols, like X10 use multiple id parts, convert all - in deviceId to ;
-            appendToMessage(message, channelSuffix.replaceAll(ID_DELIMITER, FIELDS_DELIMITER));
+        appendToMessage(message, DEVICE_MASK.substring(deviceId.length()) + deviceId);
+        if (deviceSubId != null) {
+            // some protocols, like X10 / Switch / RTS use multiple id parts
+            appendToMessage(message, deviceSubId);
         }
         if (suffix != null && !suffix.isEmpty()) {
-            message.append(suffix + FIELDS_DELIMITER);
+            appendToMessage(message, suffix);
         }
 
         logger.debug("Decoded message to be sent: {}, deviceName: {}, deviceChannel: {}, primaryId: {}", message,
-                this.getDeviceName(), channel, channelSuffix);
+                this.getProtocol(), deviceId, deviceSubId);
 
         return message.toString();
     }
