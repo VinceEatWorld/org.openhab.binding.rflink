@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.messages;
+package org.openhab.binding.rflink.device;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,13 +14,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.smarthome.core.library.types.DecimalType;
-import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
-import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
-import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
-import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
+import org.openhab.binding.rflink.message.RfLinkMessage;
 
 /**
  * RfLink data class for humidity message.
@@ -28,17 +25,13 @@ import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
  * @author Marvyn Zalewski - Initial contribution
  */
 
-public class RfLinkHumidityMessage extends RfLinkBaseMessage {
+public class RfLinkHumidityDevice extends RfLinkAbstractDevice {
     private static final String KEY_HUMIDITY = "HUM";
     private static final Collection<String> KEYS = Arrays.asList(KEY_HUMIDITY);
 
     public double humidity = 0;
 
-    public RfLinkHumidityMessage() {
-    }
-
-    public RfLinkHumidityMessage(String data) {
-        encodeMessage(data);
+    public RfLinkHumidityDevice() {
     }
 
     @Override
@@ -47,9 +40,9 @@ public class RfLinkHumidityMessage extends RfLinkBaseMessage {
     }
 
     @Override
-    public void encodeMessage(String data) {
-        super.encodeMessage(data);
-
+    public void initializeFromMessage(RfLinkMessage message) {
+        super.initializeFromMessage(message);
+        Map<String, String> values = getMessage().getValues();
         if (values.containsKey(KEY_HUMIDITY)) {
             humidity = Integer.parseInt(values.get(KEY_HUMIDITY));
         }
@@ -79,9 +72,4 @@ public class RfLinkHumidityMessage extends RfLinkBaseMessage {
         return str;
     }
 
-    @Override
-    public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
-            throws RfLinkNotImpException {
-        throw new RfLinkNotImpException("Message handler for " + channelUID + " does not support message transmission");
-    }
 }

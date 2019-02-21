@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.messages;
+package org.openhab.binding.rflink.device;
 
 import java.util.Arrays;
 import java.util.Calendar;
@@ -18,14 +18,12 @@ import org.eclipse.smarthome.core.library.types.DateTimeType;
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.library.types.StringType;
-import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
-import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
-import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
+import org.openhab.binding.rflink.message.RfLinkMessage;
 
 /**
  * RfLink data class for temperature message.
@@ -33,7 +31,7 @@ import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
  * @author Marek Majchrowski - Initial contribution
  */
 
-public class RfLinkOregonTempHygroMessage extends RfLinkBaseMessage {
+public class RfLinkTempHygroDevice extends RfLinkAbstractDevice {
     private static final String KEY_TEMPERATURE = "TEMP";
     private static final String KEY_HUMIDITY = "HUM";
     private static final String KEY_HUMIDITY_STATUS = "HSTATUS";
@@ -91,11 +89,7 @@ public class RfLinkOregonTempHygroMessage extends RfLinkBaseMessage {
         }
     }
 
-    public RfLinkOregonTempHygroMessage() {
-    }
-
-    public RfLinkOregonTempHygroMessage(String data) {
-        encodeMessage(data);
+    public RfLinkTempHygroDevice() {
     }
 
     @Override
@@ -104,9 +98,9 @@ public class RfLinkOregonTempHygroMessage extends RfLinkBaseMessage {
     }
 
     @Override
-    public void encodeMessage(String data) {
-        super.encodeMessage(data);
-
+    public void initializeFromMessage(RfLinkMessage message) {
+        super.initializeFromMessage(message);
+        Map<String, String> values = getMessage().getValues();
         if (values.containsKey(KEY_TEMPERATURE)) {
             temperature = RfLinkDataParser.parseHexaToSignedDecimal(values.get(KEY_TEMPERATURE));
         }
@@ -174,11 +168,5 @@ public class RfLinkOregonTempHygroMessage extends RfLinkBaseMessage {
         str += ", humidity status = " + humidity_status;
         str += ", low battery status = " + battery_status;
         return str;
-    }
-
-    @Override
-    public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
-            throws RfLinkNotImpException {
-        throw new RfLinkNotImpException("Message handler for " + channelUID + " does not support message transmission");
     }
 }

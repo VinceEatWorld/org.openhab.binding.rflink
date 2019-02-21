@@ -16,11 +16,10 @@ import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
+import org.openhab.binding.rflink.device.RfLinkDevice;
 import org.openhab.binding.rflink.handler.RfLinkBridgeHandler;
 import org.openhab.binding.rflink.internal.DeviceMessageListener;
-import org.openhab.binding.rflink.messages.RfLinkBaseMessage;
-import org.openhab.binding.rflink.messages.RfLinkMessage;
-import org.openhab.binding.rflink.messages.RfLinkMessageFactory;
+import org.openhab.binding.rflink.message.RfLinkMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,23 +62,18 @@ public class RfLinkDeviceDiscoveryService extends AbstractDiscoveryService imple
     }
 
     @Override
-    public void onDeviceMessageReceived(ThingUID bridge, RfLinkMessage message) {
-        logger.debug("Received: bridge: {} message: {}", bridge, message);
-
+    public void onDeviceMessageReceived(ThingUID bridge, RfLinkDevice device) {
         try {
-            RfLinkMessage msg = RfLinkMessageFactory.createMessage((RfLinkBaseMessage) message);
-            String id = message.getDeviceIdKey();
-
-            ThingTypeUID uid = msg.getThingType();
-            ThingUID thingUID = new ThingUID(uid, bridge, id.replace(RfLinkBaseMessage.ID_DELIMITER, "_"));
             if (!bridgeHandler.getConfiguration().disableDiscovery) {
+                String id = device.getKey();
+                ThingTypeUID uid = device.getThingType();
+                ThingUID thingUID = new ThingUID(uid, bridge, id.replace(RfLinkMessage.ID_DELIMITER, "_"));
                 logger.trace("Adding new RfLink {} with id '{}' to smarthome inbox", thingUID, id);
-                String deviceType = msg.getProtocol();
+                String deviceType = device.getProtocol();
                 DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withLabel(deviceType)
-                        .withProperty(RfLinkBindingConstants.DEVICE_ID, msg.getDeviceIdKey()).withBridge(bridge).build();
+                        .withProperty(RfLinkBindingConstants.DEVICE_ID, device.getKey()).withBridge(bridge)
+                        .build();
                 thingDiscovered(discoveryResult);
-            } else {
-                logger.trace("Ignoring RfLink {} with id '{}' - discovery disabled", thingUID, id);
             }
         } catch (Exception e) {
             logger.debug("Error occured during device discovery", e);

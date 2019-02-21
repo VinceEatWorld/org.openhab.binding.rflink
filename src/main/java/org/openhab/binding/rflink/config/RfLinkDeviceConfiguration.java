@@ -27,7 +27,7 @@ public class RfLinkDeviceConfiguration {
 
     @Override
     public String toString() {
-        return "RfLinkDeviceConfiguration [deviceId=" + deviceId + "]";
+        return "RfLinkDeviceConfiguration[" + deviceId + "]";
     }
 
 }

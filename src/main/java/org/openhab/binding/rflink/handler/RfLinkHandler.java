@@ -24,11 +24,11 @@ import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
+import org.openhab.binding.rflink.device.RfLinkDevice;
+import org.openhab.binding.rflink.device.RfLinkDeviceFactory;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
 import org.openhab.binding.rflink.internal.DeviceMessageListener;
-import org.openhab.binding.rflink.messages.RfLinkMessage;
-import org.openhab.binding.rflink.messages.RfLinkMessageFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,17 +62,17 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
                 // Not supported
             } else {
                 try {
-                    RfLinkMessage message = RfLinkMessageFactory
-                            .createMessageForSendingToThing(getThing().getThingTypeUID());
-                    message.initializeFromChannel(getConfigAs(RfLinkDeviceConfiguration.class), channelUID, command);
-                    updateThingStates(message);
+                    RfLinkDevice device = RfLinkDeviceFactory
+                            .createDeviceFromType(getThing().getThingTypeUID());
+                    device.initializeFromChannel(getConfigAs(RfLinkDeviceConfiguration.class), channelUID, command);
+                    updateThingStates(device);
                     int repeats = 1;
                     if (getThing().getConfiguration().containsKey("repeats")) {
                         repeats = ((BigDecimal) getThing().getConfiguration().get("repeats")).intValue();
                     }
                     repeats = Math.min(Math.max(repeats, 1), 20);
                     for (int i = 0; i < repeats; i++) {
-                        bridgeHandler.sendMessage(message);
+                        bridgeHandler.sendMessagesFromDevice(device);
                     }
                 } catch (RfLinkNotImpException e) {
                     logger.error("Message not supported: {}", e.getMessage());
@@ -141,27 +141,20 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
     }
 
     @Override
-    public void onDeviceMessageReceived(ThingUID bridge, RfLinkMessage message) {
-
-        try {
-            String id = message.getDeviceIdKey();
-            // logger.debug("Matching Message from bridge {} from device [{}] with [{}]", bridge.toString(), id,
-            // config.deviceId);
-            if (config.deviceId.equals(id)) {
-                logger.debug("Message from bridge {} from device [{}] type [{}] matched", bridge.toString(), id,
-                        message.getClass().getSimpleName());
-                updateStatus(ThingStatus.ONLINE);
-                updateThingStates(message);
-
-            }
-
-        } catch (RfLinkException e) {
-            logger.error("Error occured during message receiving", e);
+    public void onDeviceMessageReceived(ThingUID bridge, RfLinkDevice device) {
+        String id = device.getKey();
+        // logger.debug("Matching Message from bridge {} from device [{}] with [{}]", bridge.toString(), id,
+        // config.deviceId);
+        if (config.deviceId.equals(id)) {
+            logger.debug("Message from bridge {} from device [{}] type [{}] matched", bridge.toString(), id,
+                    device.getClass().getSimpleName());
+            updateStatus(ThingStatus.ONLINE);
+            updateThingStates(device);
         }
     }
 
-    private void updateThingStates(RfLinkMessage message) {
-        Map<String, State> map = message.getStates();
+    private void updateThingStates(RfLinkDevice device) {
+        Map<String, State> map = device.getStates();
         for (String channel : map.keySet()) {
             logger.debug("Update channel: {}, state: {}", channel, map.get(channel));
             updateState(new ChannelUID(getThing().getUID(), channel), map.get(channel));

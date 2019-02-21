@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.messages;
+package org.openhab.binding.rflink.device;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,18 +33,15 @@ import org.openhab.binding.rflink.type.RfLinkTypeUtils;
  * @author Arjan Mels - Added reception and debugged sending
  * @author cartemere - support RollerShutter
  */
-public class RfLinkRtsMessage extends RfLinkBaseMessage {
+public class RfLinkRtsDevice extends RfLinkAbstractDevice {
+
     private static final String KEY_RTS = "RTS";
     private static final Collection<String> KEYS = Arrays.asList(KEY_RTS);
 
     public Command command = null;
     public State state = null;
 
-    public RfLinkRtsMessage() {
-    }
-
-    public RfLinkRtsMessage(String data) {
-        encodeMessage(data);
+    public RfLinkRtsDevice() {
     }
 
     @Override
@@ -62,11 +59,6 @@ public class RfLinkRtsMessage extends RfLinkBaseMessage {
     }
 
     @Override
-    public void encodeMessage(String data) {
-        super.encodeMessage(data);
-    }
-
-    @Override
     public Collection<String> keys() {
         return KEYS;
     }
@@ -81,7 +73,7 @@ public class RfLinkRtsMessage extends RfLinkBaseMessage {
     @Override
     public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command triggeredCommand)
             throws RfLinkNotImpException, RfLinkException {
-        super.initializeFromChannel(config, channelUID, triggeredCommand);
+        super.initBaseMessageFromChannel(config, channelUID, triggeredCommand);
         this.command = getCommandAction(channelUID.getId(), triggeredCommand);
         this.state = (State) RfLinkTypeUtils.getOnOffTypeFromType(command);
     }

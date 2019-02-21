@@ -9,7 +9,7 @@
 package org.openhab.binding.rflink.internal;
 
 import org.eclipse.smarthome.core.thing.ThingUID;
-import org.openhab.binding.rflink.messages.RfLinkMessage;
+import org.openhab.binding.rflink.device.RfLinkDevice;
 
 /**
  * The {@link DeviceMessageListener} is notified when a message is received.
@@ -27,6 +27,6 @@ public interface DeviceMessageListener {
      * @param message
      *            The message which received.
      */
-    public void onDeviceMessageReceived(ThingUID bridge, RfLinkMessage message);
+    public void onDeviceMessageReceived(ThingUID bridge, RfLinkDevice message);
 
 }

@@ -28,16 +28,16 @@ Import-Package:
 Service-Component: OSGI-INF/*.xml
 Export-Package: 
  org.openhab.binding.rflink;uses:="org.eclipse.smarthome.core.thing",
- org.openhab.binding.rflink.handler;
-  uses:="org.eclipse.smarthome.core.thing,
-   org.openhab.binding.rflink.messages,
-   org.openhab.binding.rflink.config,
-   org.eclipse.smarthome.core.thing.binding,
-   org.openhab.binding.rflink.internal,
-   org.eclipse.smarthome.core.types,
-   org.openhab.binding.rflink.connector",
  org.openhab.binding.rflink.config;x-internal:=true,
  org.openhab.binding.rflink.connector;x-internal:=true,
+ org.openhab.binding.rflink.device;x-internal:=true,
  org.openhab.binding.rflink.exceptions;x-internal:=true,
- org.openhab.binding.rflink.messages;x-internal:=true,
+ org.openhab.binding.rflink.handler;
+  uses:="org.eclipse.smarthome.core.thing,
+   org.openhab.binding.rflink.internal,
+   org.openhab.binding.rflink.config,
+   org.eclipse.smarthome.core.thing.binding,
+   org.eclipse.smarthome.core.types,
+   org.openhab.binding.rflink.connector",
+ org.openhab.binding.rflink.message;x-internal:=true,
  org.openhab.binding.rflink.type;x-internal:=true

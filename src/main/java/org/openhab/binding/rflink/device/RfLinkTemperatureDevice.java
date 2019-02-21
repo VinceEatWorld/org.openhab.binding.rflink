@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.messages;
+package org.openhab.binding.rflink.device;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,13 +14,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.smarthome.core.library.types.DecimalType;
-import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
-import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
-import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
-import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
+import org.openhab.binding.rflink.message.RfLinkMessage;
 
 /**
  * RfLink data class for temperature message.
@@ -28,17 +25,13 @@ import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
  * @author John Jore - Initial contribution
  */
 
-public class RfLinkTemperatureMessage extends RfLinkBaseMessage {
+public class RfLinkTemperatureDevice extends RfLinkAbstractDevice {
     private static final String KEY_TEMPERATURE = "TEMP";
     private static final Collection<String> KEYS = Arrays.asList(KEY_TEMPERATURE);
 
     public double temperature = 0;
 
-    public RfLinkTemperatureMessage() {
-    }
-
-    public RfLinkTemperatureMessage(String data) {
-        encodeMessage(data);
+    public RfLinkTemperatureDevice() {
     }
 
     @Override
@@ -47,9 +40,9 @@ public class RfLinkTemperatureMessage extends RfLinkBaseMessage {
     }
 
     @Override
-    public void encodeMessage(String data) {
-        super.encodeMessage(data);
-
+    public void initializeFromMessage(RfLinkMessage message) {
+        super.initializeFromMessage(message);
+        Map<String, String> values = getMessage().getValues();
         if (values.containsKey(KEY_TEMPERATURE)) {
             temperature = RfLinkDataParser.parseHexaToSignedDecimal(values.get(KEY_TEMPERATURE));
         }
@@ -72,11 +65,5 @@ public class RfLinkTemperatureMessage extends RfLinkBaseMessage {
         String str = super.toString();
         str += ", Temperature = " + temperature;
         return str;
-    }
-
-    @Override
-    public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
-            throws RfLinkNotImpException {
-        throw new RfLinkNotImpException("Message handler for " + channelUID + " does not support message transmission");
     }
 }

@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.messages;
+package org.openhab.binding.rflink.device;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +27,7 @@ import org.openhab.binding.rflink.RfLinkBindingConstants;
 import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
+import org.openhab.binding.rflink.message.RfLinkMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +37,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author Arjan Mels - Initial contribution
  */
-public class RfLinkColorMessage extends RfLinkBaseMessage {
-    private Logger logger = LoggerFactory.getLogger(RfLinkColorMessage.class);
+public class RfLinkColorDevice extends RfLinkAbstractDevice {
+    private Logger logger = LoggerFactory.getLogger(RfLinkColorDevice.class);
 
     private static final String KEY_RGBW = "RGBW";
     private static final String KEY_SWITCH = "SWITCH";
@@ -53,11 +54,7 @@ public class RfLinkColorMessage extends RfLinkBaseMessage {
 
     private static HashMap<String, HSBType> currentState = new HashMap<>();
 
-    public RfLinkColorMessage() {
-    }
-
-    public RfLinkColorMessage(String data) {
-        encodeMessage(data);
+    public RfLinkColorDevice() {
     }
 
     @Override
@@ -76,10 +73,29 @@ public class RfLinkColorMessage extends RfLinkBaseMessage {
     }
 
     @Override
-    public void encodeMessage(String data) {
-        logger.debug("Color Encode data: [{}]", data);
-        super.encodeMessage(data);
+    public Collection<String> keys() {
+        return KEYS;
+    }
 
+    @Override
+    public Map<String, State> getStates() {
+        logger.debug("Color State Requested: [{}]", stateColor);
+        Map<String, State> map = new HashMap<>();
+        if (stateColor == null) {
+            map.put(RfLinkBindingConstants.CHANNEL_COLOR, null);
+        } else if (stateOnOff == null || stateOnOff.equals(OnOffType.OFF)) {
+            map.put(RfLinkBindingConstants.CHANNEL_COLOR,
+                    new HSBType(stateColor.getHue(), stateColor.getSaturation(), new PercentType(0)));
+        } else {
+            map.put(RfLinkBindingConstants.CHANNEL_COLOR, stateColor);
+        }
+        return map;
+    }
+
+    @Override
+    public void initializeFromMessage(RfLinkMessage message) {
+        super.initializeFromMessage(message);
+        Map<String, String> values = getMessage().getValues();
         if (values.containsKey(KEY_RGBW)) {
             String rgbw = values.get(KEY_RGBW);
             int color = Integer.parseInt(rgbw.substring(0, 2), 16);
@@ -87,7 +103,7 @@ public class RfLinkColorMessage extends RfLinkBaseMessage {
             stateColor = new HSBType(new DecimalType(((color * 360 / 255) + 360 - COLOR_OFFSET) % 360),
                     new PercentType(100), new PercentType(brightness * 100 / 255));
         }
-        currentState.put(this.deviceId, stateColor);
+        currentState.put(getKey(), stateColor);
 
         if (values.containsKey(KEY_CMD)) {
             switch (values.get(KEY_CMD)) {
@@ -115,37 +131,16 @@ public class RfLinkColorMessage extends RfLinkBaseMessage {
     }
 
     @Override
-    public Collection<String> keys() {
-        return KEYS;
-    }
-
-    @Override
-    public Map<String, State> getStates() {
-        logger.debug("Color State Requested: [{}]", stateColor);
-
-        Map<String, State> map = new HashMap<>();
-        if (stateColor == null) {
-            map.put(RfLinkBindingConstants.CHANNEL_COLOR, null);
-        } else if (stateOnOff == null || stateOnOff.equals(OnOffType.OFF)) {
-            map.put(RfLinkBindingConstants.CHANNEL_COLOR,
-                    new HSBType(stateColor.getHue(), stateColor.getSaturation(), new PercentType(0)));
-        } else {
-            map.put(RfLinkBindingConstants.CHANNEL_COLOR, stateColor);
-        }
-        return map;
-    }
-
-    @Override
     public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command triggeredCommand)
             throws RfLinkNotImpException, RfLinkException {
-        super.initializeFromChannel(config, channelUID, triggeredCommand);
+        super.initBaseMessageFromChannel(config, channelUID, triggeredCommand);
 
-        logger.debug("Color initializeFromChannel: deviceid={}, state={}, class={}, command={}", this.deviceId,
-                currentState.get(this.deviceId), triggeredCommand.getClass().getSimpleName(), triggeredCommand);
+        logger.debug("Color initializeFromChannel: deviceid={}, state={}, class={}, command={}", getKey(),
+                currentState.get(getKey()), triggeredCommand.getClass().getSimpleName(), triggeredCommand);
 
         command = triggeredCommand;
 
-        stateColor = currentState.get(this.deviceId);
+        stateColor = currentState.get(getKey());
         if (command instanceof HSBType) {
             // HSBType is subclass of PercentType, so must handle before PercentType
             logger.debug("Color initializeFromChannel: HSB command={}", command);
@@ -179,7 +174,7 @@ public class RfLinkColorMessage extends RfLinkBaseMessage {
         } else {
             logger.debug("Color initializeFromChannel: Other command={}", command);
         }
-        currentState.put(this.deviceId, stateColor);
+        currentState.put(getKey(), stateColor);
         logger.debug("Color initializeFromChannel: state={}", stateColor);
     }
 
@@ -223,9 +218,9 @@ public class RfLinkColorMessage extends RfLinkBaseMessage {
         }
 
         Collection<String> messages = new ArrayList<String>();
-        messages.add(super.buildMessage(rgbw + ";" + cmdString));
+        messages.add(getMessage().buildMessage(rgbw + ";" + cmdString));
         if (sendBright) {
-            messages.add(super.buildMessage(rgbw + ";BRIGHT"));
+            messages.add(getMessage().buildMessage(rgbw + ";BRIGHT"));
         }
         return messages;
     }

@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.messages;
+package org.openhab.binding.rflink.device;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,20 +14,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.smarthome.core.library.types.DecimalType;
-import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
-import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
-import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
-import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
+import org.openhab.binding.rflink.message.RfLinkMessage;
 
 /**
  * RfLink data class for energy message.
  *
  * @author Cyril Cauchois - Initial contribution
  */
-public class RfLinkEnergyMessage extends RfLinkBaseMessage {
+public class RfLinkEnergyDevice extends RfLinkAbstractDevice {
 
     private static float WATTS_TO_AMPS_CONVERSION_FACTOR = 230F;
 
@@ -41,12 +38,8 @@ public class RfLinkEnergyMessage extends RfLinkBaseMessage {
     public double instantPower = 0;
     public double totalUsage = 0;
 
-    public RfLinkEnergyMessage() {
+    public RfLinkEnergyDevice() {
 
-    }
-
-    public RfLinkEnergyMessage(String data) {
-        encodeMessage(data);
     }
 
     @Override
@@ -68,10 +61,9 @@ public class RfLinkEnergyMessage extends RfLinkBaseMessage {
     }
 
     @Override
-    public void encodeMessage(String data) {
-
-        super.encodeMessage(data);
-
+    public void initializeFromMessage(RfLinkMessage message) {
+        super.initializeFromMessage(message);
+        Map<String, String> values = getMessage().getValues();
         // all usage is reported in Watts based on 230V
         if (values.containsKey(KEY_INSTANT_POWER)) {
             instantPower = RfLinkDataParser.parseHexaToUnsignedInt(values.get(KEY_INSTANT_POWER));
@@ -82,7 +74,6 @@ public class RfLinkEnergyMessage extends RfLinkBaseMessage {
             totalUsage = RfLinkDataParser.parseHexaToUnsignedInt(values.get(KEY_TOTAL_POWER));
             totalAmpHours = totalUsage / WATTS_TO_AMPS_CONVERSION_FACTOR;
         }
-
     }
 
     @Override
@@ -100,9 +91,4 @@ public class RfLinkEnergyMessage extends RfLinkBaseMessage {
         return map;
     }
 
-    @Override
-    public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
-            throws RfLinkNotImpException {
-        throw new RfLinkNotImpException("Message handler for " + channelUID + " does not support message transmission");
-    }
 }

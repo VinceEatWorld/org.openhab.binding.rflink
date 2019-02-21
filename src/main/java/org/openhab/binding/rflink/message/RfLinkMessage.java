@@ -6,21 +6,17 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.messages;
+package org.openhab.binding.rflink.message;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.smarthome.core.thing.ChannelUID;
-import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.types.Command;
-import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
+import org.openhab.binding.rflink.device.RfLinkDataParser;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
-import org.openhab.binding.rflink.type.RfLinkTypeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,10 +25,11 @@ import org.slf4j.LoggerFactory;
  *
  * @author Cyril Cauchois - Initial contribution
  * @author cartemere - review Message management. add Reverse support for Switch/RTS
+ * @author cartemere - Massive rework : split message vs device
  */
-public abstract class RfLinkBaseMessage implements RfLinkMessage {
+public class RfLinkMessage {
 
-    private Logger logger = LoggerFactory.getLogger(RfLinkBaseMessage.class);
+    private Logger logger = LoggerFactory.getLogger(RfLinkMessage.class);
 
     public final static String FIELDS_DELIMITER = ";";
     public final static String VALUE_DELIMITER = "=";
@@ -50,28 +47,23 @@ public abstract class RfLinkBaseMessage implements RfLinkMessage {
     private String protocol; // protocol Name (RTS, X10, etc.)
     protected String deviceId; // device Identifier (Rolling code, etc.)
     protected String deviceSubId; // switch Identifier (SWITCH=XX, etc.)
-    protected Boolean isCommandReversed;
-
     protected Map<String, String> values = new HashMap<>();
 
-    public RfLinkBaseMessage() {
-
+    public RfLinkMessage(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
+            throws RfLinkNotImpException, RfLinkException {
+        String[] elements = config.deviceId.split(ID_DELIMITER);
+        if (elements.length > 1) {
+            protocol = elements[0];
+            deviceId = elements[1];
+            if (elements.length > 2) {
+                deviceSubId = elements[2];
+            }
+        }
     }
 
-    public RfLinkBaseMessage(String data) {
-        encodeMessage(data);
-    }
-
-    @Override
-    public ThingTypeUID getThingType() {
-        return null;
-    }
-
-    @Override
-    public void encodeMessage(String data) {
+    public RfLinkMessage(String data) {
         rawMessage = data;
-
-        final String[] elements = rawMessage.split(FIELDS_DELIMITER);
+        final String[] elements = data.split(FIELDS_DELIMITER);
         final int size = elements.length;
         // Every message should have at least 5 parts
         // Example : 20;31;Mebus;ID=c201;TEMP=00cf;
@@ -111,8 +103,11 @@ public abstract class RfLinkBaseMessage implements RfLinkMessage {
         return str;
     }
 
-    @Override
-    public String getDeviceIdKey() {
+    public String getRawMessage() {
+        return rawMessage;
+    }
+
+    public String getDeviceKey() {
         String deviceIdKey = protocol + ID_DELIMITER + deviceId;
         if (deviceSubId != null) {
             deviceIdKey += ID_DELIMITER + deviceSubId;
@@ -120,47 +115,20 @@ public abstract class RfLinkBaseMessage implements RfLinkMessage {
         return deviceIdKey;
     }
 
-    @Override
     public String getProtocol() {
         return protocol;
     }
 
-    @Override
-    public Collection<String> keys() {
-        return null;
+    public String getDeviceId() {
+        return deviceId;
+    }
+
+    public String getDeviceSubId() {
+        return deviceSubId;
     }
 
     public Map<String, String> getValues() {
         return values;
-    }
-
-    @Override
-    public Map<String, State> getStates() {
-        return null;
-    }
-
-    @Override
-    public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
-            throws RfLinkNotImpException, RfLinkException {
-        String[] elements = config.deviceId.split(ID_DELIMITER);
-        if (elements.length > 1) {
-            this.protocol = elements[0];
-            this.deviceId = elements[1];
-            if (elements.length > 2) {
-                this.deviceSubId = elements[2];
-            }
-        }
-        this.isCommandReversed = config.isCommandReversed;
-    }
-
-    @Override
-    public Collection<String> buildMessages() {
-        return Collections.singleton(buildMessage(getCommandSuffix()));
-    }
-
-    // to override in subClasses if needed
-    public String getCommandSuffix() {
-        return null;
     }
 
     public String buildMessage(String suffix) {
@@ -188,16 +156,4 @@ public abstract class RfLinkBaseMessage implements RfLinkMessage {
         message.append(element).append(FIELDS_DELIMITER);
     }
 
-    protected Command getEffectiveCommand(Command inputCommand) {
-        if (isCommandReversed) {
-            // reverse the command
-            Command effectiveCommand = (Command) RfLinkTypeUtils.getAntonym(inputCommand);
-            if (effectiveCommand == null) {
-                // no reverse available : defaulting
-                return inputCommand;
-            }
-            return effectiveCommand;
-        }
-        return inputCommand;
-    }
 }

@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.messages;
+package org.openhab.binding.rflink.device;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,6 +26,7 @@ import org.openhab.binding.rflink.RfLinkBindingConstants;
 import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
+import org.openhab.binding.rflink.message.RfLinkMessage;
 import org.openhab.binding.rflink.type.RfLinkTypeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,23 +39,19 @@ import org.slf4j.LoggerFactory;
  * @author Arjan Mels - Simplified by using system OnOffType and OpenClosedType
  * @author John Jore - Simplification breaks "Contacts" as RfLink outputs OFF/ON, not OPEN/CLOSED. Reverted
  */
-public class RfLinkSwitchMessage extends RfLinkBaseMessage {
+public class RfLinkSwitchDevice extends RfLinkAbstractDevice {
     private static final String KEY_SWITCH = "SWITCH";
     private static final String KEY_CMD = "CMD";
     private static final String VALUE_DIMMING_PREFIX = "SET_LEVEL";
 
     private static final Collection<String> KEYS = Arrays.asList(KEY_SWITCH, KEY_CMD);
-    private static Logger logger = LoggerFactory.getLogger(RfLinkSwitchMessage.class);
+    private static Logger logger = LoggerFactory.getLogger(RfLinkSwitchDevice.class);
 
     public Type command = OnOffType.OFF;
     public Type contact = OpenClosedType.CLOSED;
     public Type dimming = null;
 
-    public RfLinkSwitchMessage() {
-    }
-
-    public RfLinkSwitchMessage(String data) {
-        encodeMessage(data);
+    public RfLinkSwitchDevice() {
     }
 
     @Override
@@ -74,9 +71,9 @@ public class RfLinkSwitchMessage extends RfLinkBaseMessage {
     }
 
     @Override
-    public void encodeMessage(String data) {
-        super.encodeMessage(data);
-
+    public void initializeFromMessage(RfLinkMessage message) {
+        super.initializeFromMessage(message);
+        Map<String, String> values = getMessage().getValues();
         if (values.containsKey(KEY_CMD)) {
             command = RfLinkTypeUtils.getTypeFromStringValue(values.get(KEY_CMD));
             if (RfLinkTypeUtils.isNullOrUndef(command)) {
@@ -106,7 +103,7 @@ public class RfLinkSwitchMessage extends RfLinkBaseMessage {
     }
 
     private boolean isDimmingValue(String value) {
-        if (value != null && value.contains(VALUE_DIMMING_PREFIX + RfLinkBaseMessage.VALUE_DELIMITER)) {
+        if (value != null && value.contains(VALUE_DIMMING_PREFIX + RfLinkMessage.VALUE_DELIMITER)) {
             return true;
         }
         return false;
@@ -131,7 +128,7 @@ public class RfLinkSwitchMessage extends RfLinkBaseMessage {
     @Override
     public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command triggeredCommand)
             throws RfLinkNotImpException, RfLinkException {
-        super.initializeFromChannel(config, channelUID, triggeredCommand);
+        super.initBaseMessageFromChannel(config, channelUID, triggeredCommand);
         initializeCommandFromTriggeredCommand(triggeredCommand);
     }
 

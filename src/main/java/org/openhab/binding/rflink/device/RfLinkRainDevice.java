@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.messages;
+package org.openhab.binding.rflink.device;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -15,20 +15,17 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.smarthome.core.library.types.DecimalType;
-import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
-import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
-import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
-import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
+import org.openhab.binding.rflink.message.RfLinkMessage;
 
 /**
  * RfLink data class for rain message.
  *
  * @author Cyril Cauchois - Initial contribution
  */
-public class RfLinkRainMessage extends RfLinkBaseMessage {
+public class RfLinkRainDevice extends RfLinkAbstractDevice {
 
     private static final String KEY_RAIN = "RAIN";
     private static final String KEY_RAIN_RATE = "RAINRATE";
@@ -38,12 +35,8 @@ public class RfLinkRainMessage extends RfLinkBaseMessage {
     public double rain = 0;
     public double rainRate = 0;
 
-    public RfLinkRainMessage() {
+    public RfLinkRainDevice() {
 
-    }
-
-    public RfLinkRainMessage(String data) {
-        encodeMessage(data);
     }
 
     @Override
@@ -52,8 +45,9 @@ public class RfLinkRainMessage extends RfLinkBaseMessage {
     }
 
     @Override
-    public void encodeMessage(String data) {
-        super.encodeMessage(data);
+    public void initializeFromMessage(RfLinkMessage message) {
+        super.initializeFromMessage(message);
+        Map<String, String> values = getMessage().getValues();
         if (values.containsKey(KEY_RAIN)) {
             rain = RfLinkDataParser.parseHexaToUnsignedInt(values.get(KEY_RAIN));
         }
@@ -83,9 +77,4 @@ public class RfLinkRainMessage extends RfLinkBaseMessage {
         return str;
     }
 
-    @Override
-    public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
-            throws RfLinkNotImpException {
-        throw new RfLinkNotImpException("Message handler for " + channelUID + " does not support message transmission");
-    }
 }

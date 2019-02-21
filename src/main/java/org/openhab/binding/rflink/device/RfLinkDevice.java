@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.messages;
+package org.openhab.binding.rflink.device;
 
 import java.util.Collection;
 import java.util.Map;
@@ -18,21 +18,15 @@ import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
+import org.openhab.binding.rflink.message.RfLinkMessage;
 
 /**
- * This interface defines interface which every message class should implement.
+ * This interface defines interface which every device class should implement.
  *
  * @author Cyril Cauchois - Initial contribution
+ * @author cartemere - refactoring + define Predicate
  */
-public interface RfLinkMessage {
-
-    /**
-     * Procedure for encode raw data.
-     *
-     * @param data
-     *                 Raw data.
-     */
-    void encodeMessage(String data);
+public interface RfLinkDevice {
 
     /**
      * Procedure generate message[s] to send to the bridge
@@ -42,11 +36,11 @@ public interface RfLinkMessage {
     public Collection<String> buildMessages();
 
     /**
-     * Procedure to get device id.
+     * Procedure to get device unique Identifier
      *
-     * @return device Id.
+     * @return the device Key.
      */
-    String getDeviceIdKey() throws RfLinkException;
+    String getKey();
 
     /**
      * Procedure to get device name.
@@ -77,11 +71,27 @@ public interface RfLinkMessage {
     Map<String, State> getStates();
 
     /**
-     * Initializes message to be transmitted
+     * Get a specific State from the Device instance
+     * 
+     * @param key the state keyword
+     * @return the related State, null if not found
+     */
+    State getState(String key);
+
+    /**
+     * Initializes Device for transmission message
      *
-     * @return
      * @throws RfLinkException
      */
     void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
             throws RfLinkNotImpException, RfLinkException;
+
+    /**
+     * Initializes Device from reception message
+     *
+     * @param message the RfLink message received from the bridge
+     * @throws RfLinkNotImpException
+     * @throws RfLinkException
+     */
+    void initializeFromMessage(RfLinkMessage message) throws RfLinkNotImpException, RfLinkException;
 }
