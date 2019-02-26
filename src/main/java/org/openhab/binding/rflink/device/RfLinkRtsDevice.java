@@ -10,6 +10,7 @@ package org.openhab.binding.rflink.device;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.eclipse.smarthome.core.library.types.PercentType;
 import org.eclipse.smarthome.core.library.types.StopMoveType;
@@ -23,6 +24,7 @@ import org.openhab.binding.rflink.RfLinkBindingConstants;
 import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
+import org.openhab.binding.rflink.message.RfLinkMessage;
 import org.openhab.binding.rflink.type.RfLinkTypeUtils;
 
 /**
@@ -34,6 +36,8 @@ import org.openhab.binding.rflink.type.RfLinkTypeUtils;
  */
 public class RfLinkRtsDevice extends RfLinkAbstractDevice {
 
+    public static String PROTOCOL_RTS = "RTS";
+    private static final String KEY_CMD = "CMD";
     public Command command = null;
     public State shutter = null;
 
@@ -43,6 +47,13 @@ public class RfLinkRtsDevice extends RfLinkAbstractDevice {
     @Override
     public ThingTypeUID getThingType() {
         return RfLinkBindingConstants.THING_TYPE_RTS;
+    }
+
+    @Override
+    public Predicate<RfLinkMessage> eligibleMessageFunction() {
+        return (message) -> {
+            return PROTOCOL_RTS.equals(message.getProtocol());
+        };
     }
 
     @Override
@@ -65,11 +76,23 @@ public class RfLinkRtsDevice extends RfLinkAbstractDevice {
     }
 
     @Override
+    public void initializeFromMessage(RfLinkMessage message) {
+        super.initializeFromMessage(message);
+        Map<String, String> values = getMessage().getAttributes();
+        if (values.containsKey(KEY_CMD)) {
+            command = (Command) RfLinkTypeUtils.getTypeFromStringValue(values.get(KEY_CMD));
+            shutter = (State) RfLinkTypeUtils.getOnOffTypeFromType(command);
+        }
+    }
+
+    @Override
     public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command triggeredCommand)
             throws RfLinkNotImpException, RfLinkException {
         super.initBaseMessageFromChannel(config, channelUID, triggeredCommand);
-        this.command = getCommandAction(channelUID.getId(), triggeredCommand);
-        this.shutter = (State) RfLinkTypeUtils.getOnOffTypeFromType(command);
+        command = getCommandAction(channelUID.getId(), triggeredCommand);
+        if (!(config.shutterDuration > 0)) {
+            shutter = (State) RfLinkTypeUtils.getOnOffTypeFromType(command);
+        }
     }
 
     @Override
