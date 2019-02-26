@@ -8,8 +8,6 @@
  */
 package org.openhab.binding.rflink.device;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +25,6 @@ import org.openhab.binding.rflink.message.RfLinkMessage;
 
 public class RfLinkTemperatureDevice extends RfLinkAbstractDevice {
     private static final String KEY_TEMPERATURE = "TEMP";
-    private static final Collection<String> KEYS = Arrays.asList(KEY_TEMPERATURE);
 
     public double temperature = 0;
 
@@ -42,15 +39,10 @@ public class RfLinkTemperatureDevice extends RfLinkAbstractDevice {
     @Override
     public void initializeFromMessage(RfLinkMessage message) {
         super.initializeFromMessage(message);
-        Map<String, String> values = getMessage().getValues();
+        Map<String, String> values = getMessage().getAttributes();
         if (values.containsKey(KEY_TEMPERATURE)) {
             temperature = RfLinkDataParser.parseHexaToSignedDecimal(values.get(KEY_TEMPERATURE));
         }
-    }
-
-    @Override
-    public Collection<String> keys() {
-        return KEYS;
     }
 
     @Override

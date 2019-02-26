@@ -11,6 +11,7 @@ package org.openhab.binding.rflink.device;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.types.Command;
@@ -43,6 +44,12 @@ public abstract class RfLinkAbstractDevice implements RfLinkDevice {
             throws RfLinkNotImpException, RfLinkException {
         throw new RfLinkNotImpException("Message handler for " + config + "/" + channelUID
                 + " does not support command transmission " + command);
+    }
+
+    @Override
+    public Predicate<RfLinkMessage> eligibleMessageFunction() {
+        // by default = do NOT handle any kind of message (to override in subclasses)
+        return (message) -> false;
     }
 
     public void initBaseMessageFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)

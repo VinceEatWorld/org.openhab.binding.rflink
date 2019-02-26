@@ -11,6 +11,8 @@ package org.openhab.binding.rflink.device;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Predicate;
 
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
@@ -30,8 +32,8 @@ public class RfLinkDeviceFactory {
 
     private static Logger logger = LoggerFactory.getLogger(RfLinkDeviceFactory.class);
 
-    private static LinkedHashMap<String, Class> KEY_TO_CLASS = new LinkedHashMap<>();
-    private static HashMap<ThingTypeUID, Class> THINGTYPE_TO_CLASS = new HashMap<>();
+    private static LinkedHashMap<Predicate<RfLinkMessage>, Class<? extends RfLinkDevice>> MESSAGE_TO_DEVICE = new LinkedHashMap<>();
+    private static HashMap<ThingTypeUID, Class<? extends RfLinkDevice>> THINGTYPE_TO_CLASS = new HashMap<>();
 
     /**
      * Mapping of the various message classes.
@@ -42,22 +44,18 @@ public class RfLinkDeviceFactory {
         addMappingOfClass(RfLinkWindDevice.class);
         addMappingOfClass(RfLinkRainDevice.class);
         addMappingOfClass(RfLinkColorDevice.class);
-        addMappingOfClass(RfLinkTemperatureDevice.class);
+        // addMappingOfClass(RfLinkTemperatureDevice.class);
         addMappingOfClass(RfLinkRtsDevice.class);
-        addMappingOfClass(RfLinkHumidityDevice.class);
+        // addMappingOfClass(RfLinkHumidityDevice.class);
         addMappingOfClass(RfLinkTempHygroDevice.class);
         addMappingOfClass(RfLinkSwitchDevice.class); // Switch class last as it is most generic
     }
 
-    private static void addMappingOfClass(Class _class) {
+    private static void addMappingOfClass(Class<? extends RfLinkDevice> _class) {
         try {
-            RfLinkDevice m = (RfLinkDevice) _class.newInstance();
-
-            for (String key : m.keys()) {
-                KEY_TO_CLASS.put(key, _class);
-            }
+            RfLinkDevice m = _class.newInstance();
+            MESSAGE_TO_DEVICE.put(m.eligibleMessageFunction(), _class);
             THINGTYPE_TO_CLASS.put(m.getThingType(), _class);
-
         } catch (InstantiationException | IllegalAccessException e) {
 
         }
@@ -65,10 +63,11 @@ public class RfLinkDeviceFactory {
 
     public static RfLinkDevice createDeviceFromMessage(RfLinkMessage message)
             throws RfLinkException, RfLinkNotImpException {
-        for (String key : KEY_TO_CLASS.keySet()) {
-            if (message.getValues().containsKey(key)) {
+        for (Map.Entry<Predicate<RfLinkMessage>, Class<? extends RfLinkDevice>> messageToDeviceEntry : MESSAGE_TO_DEVICE
+                .entrySet()) {
+            if (messageToDeviceEntry.getKey().test(message)) {
+                Class<? extends RfLinkDevice> cl = messageToDeviceEntry.getValue();
                 try {
-                    Class<?> cl = KEY_TO_CLASS.get(key);
                     Constructor<?> c = cl.getConstructor();
                     RfLinkDevice device = (RfLinkDevice) c.newInstance();
                     return device;
@@ -77,7 +76,9 @@ public class RfLinkDeviceFactory {
                     throw new RfLinkException("unable to instanciate message object", e);
                 }
             }
+
         }
+
         throw new RfLinkNotImpException("No message implementation found for packet " + message.rawMessage);
     }
 

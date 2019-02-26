@@ -8,8 +8,6 @@
  */
 package org.openhab.binding.rflink.device;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,9 +33,6 @@ import org.openhab.binding.rflink.type.RfLinkTypeUtils;
  */
 public class RfLinkRtsDevice extends RfLinkAbstractDevice {
 
-    private static final String KEY_RTS = "RTS";
-    private static final Collection<String> KEYS = Arrays.asList(KEY_RTS);
-
     public Command command = null;
     public State state = null;
 
@@ -59,14 +54,10 @@ public class RfLinkRtsDevice extends RfLinkAbstractDevice {
     }
 
     @Override
-    public Collection<String> keys() {
-        return KEYS;
-    }
-
-    @Override
     public Map<String, State> getStates() {
         Map<String, State> map = new HashMap<>();
         map.put(RfLinkBindingConstants.CHANNEL_SHUTTER, state);
+        map.put(RfLinkBindingConstants.CHANNEL_COMMAND, (State) command);
         return map;
     }
 

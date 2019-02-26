@@ -10,6 +10,7 @@ package org.openhab.binding.rflink.device;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
@@ -27,6 +28,13 @@ import org.openhab.binding.rflink.message.RfLinkMessage;
  * @author cartemere - refactoring + define Predicate
  */
 public interface RfLinkDevice {
+
+    /**
+     * Lambda function to check the eligibility of an incoming RfLinkMessage.
+     *
+     * @return a Predicate returning 'true' if the Message is eligible, 'false' otherwise
+     */
+    public Predicate<RfLinkMessage> eligibleMessageFunction();
 
     /**
      * Procedure generate message[s] to send to the bridge
@@ -57,13 +65,6 @@ public interface RfLinkDevice {
     ThingTypeUID getThingType();
 
     /**
-     * Get all the value names that concerns this message
-     *
-     * @return
-     */
-    Collection<String> keys();
-
-    /**
      * Get all the values in form of smarthome states
      *
      * @return
@@ -72,7 +73,7 @@ public interface RfLinkDevice {
 
     /**
      * Get a specific State from the Device instance
-     * 
+     *
      * @param key the state keyword
      * @return the related State, null if not found
      */

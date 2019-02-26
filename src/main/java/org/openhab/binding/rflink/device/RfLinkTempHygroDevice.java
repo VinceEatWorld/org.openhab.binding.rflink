@@ -11,8 +11,10 @@ package org.openhab.binding.rflink.device;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.eclipse.smarthome.core.library.types.DateTimeType;
 import org.eclipse.smarthome.core.library.types.DecimalType;
@@ -98,9 +100,16 @@ public class RfLinkTempHygroDevice extends RfLinkAbstractDevice {
     }
 
     @Override
+    public Predicate<RfLinkMessage> eligibleMessageFunction() {
+        return (message) -> {
+            return !Collections.disjoint(message.getAttributesKeys(), KEYS);
+        };
+    }
+
+    @Override
     public void initializeFromMessage(RfLinkMessage message) {
         super.initializeFromMessage(message);
-        Map<String, String> values = getMessage().getValues();
+        Map<String, String> values = getMessage().getAttributes();
         if (values.containsKey(KEY_TEMPERATURE)) {
             temperature = RfLinkDataParser.parseHexaToSignedDecimal(values.get(KEY_TEMPERATURE));
         }
@@ -139,11 +148,6 @@ public class RfLinkTempHygroDevice extends RfLinkAbstractDevice {
                 battery_status = Commands.UNKNOWN;
             }
         }
-    }
-
-    @Override
-    public Collection<String> keys() {
-        return KEYS;
     }
 
     @Override

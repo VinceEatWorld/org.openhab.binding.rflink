@@ -8,6 +8,7 @@
  */
 package org.openhab.binding.rflink.message;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +48,7 @@ public class RfLinkMessage {
     private String protocol; // protocol Name (RTS, X10, etc.)
     protected String deviceId; // device Identifier (Rolling code, etc.)
     protected String deviceSubId; // switch Identifier (SWITCH=XX, etc.)
-    protected Map<String, String> values = new HashMap<>();
+    protected Map<String, String> attributes = new HashMap<>();
 
     public RfLinkMessage(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
             throws RfLinkNotImpException, RfLinkException {
@@ -79,11 +80,11 @@ public class RfLinkMessage {
                     String[] keyValue = elements[i].split(VALUE_DELIMITER, 2);
                     if (keyValue.length > 1) {
                         // Raw values are stored, and will be decoded by sub implementations
-                        values.put(keyValue[0], keyValue[1]);
+                        attributes.put(keyValue[0], keyValue[1]);
                     }
                 }
-                deviceId = values.get("ID");
-                deviceSubId = values.get("SWITCH");
+                deviceId = attributes.get("ID");
+                deviceSubId = attributes.get("SWITCH");
             }
         }
     }
@@ -127,8 +128,12 @@ public class RfLinkMessage {
         return deviceSubId;
     }
 
-    public Map<String, String> getValues() {
-        return values;
+    public Map<String, String> getAttributes() {
+        return attributes;
+    }
+
+    public Collection<String> getAttributesKeys() {
+        return attributes.keySet();
     }
 
     public String buildMessage(String suffix) {

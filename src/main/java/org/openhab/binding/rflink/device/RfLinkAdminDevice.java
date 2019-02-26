@@ -41,9 +41,4 @@ public class RfLinkAdminDevice extends RfLinkAbstractDevice {
         return null;
     }
 
-    @Override
-    public Collection<String> keys() {
-        return Collections.EMPTY_LIST;
-    }
-
 }

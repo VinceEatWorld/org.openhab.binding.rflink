@@ -10,8 +10,10 @@ package org.openhab.binding.rflink.device;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.OnOffType;
@@ -60,6 +62,13 @@ public class RfLinkSwitchDevice extends RfLinkAbstractDevice {
     }
 
     @Override
+    public Predicate<RfLinkMessage> eligibleMessageFunction() {
+        return (message) -> {
+            return !Collections.disjoint(message.getAttributesKeys(), KEYS);
+        };
+    }
+
+    @Override
     public String toString() {
         String str = super.toString();
         str += ", Command = " + command;
@@ -73,7 +82,7 @@ public class RfLinkSwitchDevice extends RfLinkAbstractDevice {
     @Override
     public void initializeFromMessage(RfLinkMessage message) {
         super.initializeFromMessage(message);
-        Map<String, String> values = getMessage().getValues();
+        Map<String, String> values = getMessage().getAttributes();
         if (values.containsKey(KEY_CMD)) {
             command = RfLinkTypeUtils.getTypeFromStringValue(values.get(KEY_CMD));
             if (RfLinkTypeUtils.isNullOrUndef(command)) {
@@ -107,11 +116,6 @@ public class RfLinkSwitchDevice extends RfLinkAbstractDevice {
             return true;
         }
         return false;
-    }
-
-    @Override
-    public Collection<String> keys() {
-        return KEYS;
     }
 
     @Override

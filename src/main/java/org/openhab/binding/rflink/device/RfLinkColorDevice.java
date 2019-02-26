@@ -9,10 +9,10 @@
 package org.openhab.binding.rflink.device;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.HSBType;
@@ -41,9 +41,7 @@ public class RfLinkColorDevice extends RfLinkAbstractDevice {
     private Logger logger = LoggerFactory.getLogger(RfLinkColorDevice.class);
 
     private static final String KEY_RGBW = "RGBW";
-    private static final String KEY_SWITCH = "SWITCH";
     private static final String KEY_CMD = "CMD";
-    private static final Collection<String> KEYS = Arrays.asList(KEY_RGBW);
 
     // angle between OpenHab Hue and RFLink/MiLight Hue
     private static final int COLOR_OFFSET = 45;
@@ -73,8 +71,10 @@ public class RfLinkColorDevice extends RfLinkAbstractDevice {
     }
 
     @Override
-    public Collection<String> keys() {
-        return KEYS;
+    public Predicate<RfLinkMessage> eligibleMessageFunction() {
+        return (message) -> {
+            return message.getAttributesKeys().contains(KEY_RGBW);
+        };
     }
 
     @Override
@@ -95,7 +95,7 @@ public class RfLinkColorDevice extends RfLinkAbstractDevice {
     @Override
     public void initializeFromMessage(RfLinkMessage message) {
         super.initializeFromMessage(message);
-        Map<String, String> values = getMessage().getValues();
+        Map<String, String> values = getMessage().getAttributes();
         if (values.containsKey(KEY_RGBW)) {
             String rgbw = values.get(KEY_RGBW);
             int color = Integer.parseInt(rgbw.substring(0, 2), 16);
