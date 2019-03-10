@@ -20,14 +20,18 @@ public class RfLinkDeviceConfiguration {
     public String deviceId;
 
     // Number of times to repeat a message
-    public int repeats;
+    public int repeats = 1;
 
     // reverse commands on the device
     public boolean isCommandReversed = Boolean.FALSE;
 
+    // shutter duration (in seconds) for RTS shutter position tracking
+    public int shutterDuration = 0;
+
     @Override
     public String toString() {
-        return "RfLinkDeviceConfiguration[" + deviceId + "]";
+        return "RfLinkDeviceConfiguration[" + deviceId + "] x" + repeats + " " + (isCommandReversed ? "reversed " : "")
+                + (shutterDuration > 0 ? "timing=" + shutterDuration + "s" : "");
     }
 
 }

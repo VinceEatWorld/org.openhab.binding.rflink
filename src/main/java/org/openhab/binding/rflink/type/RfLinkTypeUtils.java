@@ -116,9 +116,9 @@ public class RfLinkTypeUtils {
      */
     public static Type getUpDownTypeFromType(Type command) {
         Type type = UnDefType.UNDEF;
-        if (isSynonym(UpDownType.DOWN, command) || isClosePercent(command)) {
+        if (isSynonym(UpDownType.DOWN, command)) {
             type = UpDownType.DOWN;
-        } else if (isSynonym(UpDownType.UP, command) || isOpenPercent(command)) {
+        } else if (isSynonym(UpDownType.UP, command)) {
             type = UpDownType.UP;
         } else {
             logger.info("Unable to define Switch state from type " + command);

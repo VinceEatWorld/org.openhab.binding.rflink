@@ -13,7 +13,7 @@
 		<label>RFLink Somfy/RTS device</label>
 		<description>A Somfy/RTS device.</description>
 
-		<!-- for remote {1} with adress {123ABC} Command: 10;RTS;123ABC;1;UP; Command: 10;RTS;123ABC;1;DOWN; Command: 10;RTS;123ABC;1;STOP; -->
+		<!-- for remote {1} with adress {123ABC} Command: 10;RTS;123ABC;0;UP; Command: 10;RTS;123ABC;0;DOWN; Command: 10;RTS;123ABC;0;STOP; -->
 		<channels>
 			<channel id="command" typeId="command" />
 			<channel id="shutter" typeId="shutter" />
@@ -28,6 +28,11 @@
 			<parameter name="isCommandReversed" type="boolean" required="false">
 				<label>Reverse Command</label>
 				<description>Enable in case thing commands works up-side-down</description>
+			</parameter>
+			
+			<parameter name="shutterDuration" type="integer" required="false">
+				<label>RollerShutter duration</label>
+				<description>Time (in seconds) for the RollerShutter to move from full OPEN to full CLOSE (default is 0 = disabled). REQUIRED for Shutter position tracking.</description>
 			</parameter>
 		</config-description>
 	</thing-type>

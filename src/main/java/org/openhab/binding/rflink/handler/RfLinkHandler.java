@@ -8,8 +8,9 @@
  */
 package org.openhab.binding.rflink.handler;
 
-import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.ChannelUID;
@@ -26,6 +27,7 @@ import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.device.RfLinkDevice;
 import org.openhab.binding.rflink.device.RfLinkDeviceFactory;
+import org.openhab.binding.rflink.device.RfLinkRtsDevice;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
 import org.openhab.binding.rflink.internal.DeviceMessageListener;
@@ -39,11 +41,14 @@ import org.slf4j.LoggerFactory;
  * @author Cyril Cauchois - Initial contribution
  * @author John Jore - Added initial support to send commands to devices
  * @author Arjan Mels - Added option to repeat messages
+ * @author cartemere - handle RTS position tracking
  */
 public class RfLinkHandler extends BaseThingHandler implements DeviceMessageListener {
 
     public static final int TIME_BETWEEN_COMMANDS = 50;
     private Logger logger = LoggerFactory.getLogger(RfLinkHandler.class);
+
+    private static Map<String, RfLinkRtsPositionHandler> shutterInfosMap = new HashMap<>();
 
     private RfLinkBridgeHandler bridgeHandler;
 
@@ -53,26 +58,42 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
         super(thing);
     }
 
+    protected ScheduledExecutorService getScheduler() {
+        return scheduler;
+    }
+
+    protected RfLinkBridgeHandler getBridgeHandler() {
+        return bridgeHandler;
+    }
+
+    public RfLinkDeviceConfiguration getConfiguration() {
+        return config;
+    }
+
+    @Override
+    protected void updateState(ChannelUID channelUID, State state) {
+        super.updateState(channelUID, state);
+    }
+
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         logger.debug("Received channel: {}, command: {}", channelUID, command);
-
         if (bridgeHandler != null) {
             if (command instanceof RefreshType) {
                 // Not supported
             } else {
                 try {
-                    RfLinkDevice device = RfLinkDeviceFactory
-                            .createDeviceFromType(getThing().getThingTypeUID());
+                    RfLinkDevice device = RfLinkDeviceFactory.createDeviceFromType(getThing().getThingTypeUID());
                     device.initializeFromChannel(getConfigAs(RfLinkDeviceConfiguration.class), channelUID, command);
-                    updateThingStates(device);
-                    int repeats = 1;
-                    if (getThing().getConfiguration().containsKey("repeats")) {
-                        repeats = ((BigDecimal) getThing().getConfiguration().get("repeats")).intValue();
-                    }
-                    repeats = Math.min(Math.max(repeats, 1), 20);
-                    for (int i = 0; i < repeats; i++) {
-                        bridgeHandler.sendMessagesFromDevice(device);
+                    if (isRtsPositionTrackerEnabled(device)) {
+                        // need specific handling : the command is processed by the tracker
+                        handleRtsPositionTracker(this, device);
+                    } else {
+                        int repeats = Math.min(Math.max(getConfiguration().repeats, 1), 20);
+                        for (int i = 0; i < repeats; i++) {
+                            bridgeHandler.sendMessagesFromDevice(device);
+                        }
+                        updateThingStates(device);
                     }
                 } catch (RfLinkNotImpException e) {
                     logger.error("Message not supported: {}", e.getMessage());
@@ -149,15 +170,51 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
             logger.debug("Message from bridge {} from device [{}] type [{}] matched", bridge.toString(), id,
                     device.getClass().getSimpleName());
             updateStatus(ThingStatus.ONLINE);
-            updateThingStates(device);
+            if (isRtsPositionTrackerEnabled(device)) {
+                handleRtsPositionTracker(this, device);
+            } else {
+                updateThingStates(device);
+            }
         }
     }
 
-    private void updateThingStates(RfLinkDevice device) {
+    protected void updateThingStates(RfLinkDevice device) {
         Map<String, State> map = device.getStates();
         for (String channel : map.keySet()) {
             logger.debug("Update channel: {}, state: {}", channel, map.get(channel));
             updateState(new ChannelUID(getThing().getUID(), channel), map.get(channel));
         }
     }
+
+    private boolean isRtsPositionTrackerEnabled(RfLinkDevice device) {
+        if (device instanceof RfLinkRtsDevice && getConfiguration().shutterDuration > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    private void handleRtsPositionTracker(RfLinkHandler handler, RfLinkDevice device) {
+        try {
+            RfLinkRtsPositionHandler shutterInfos = getShutterInfos(handler, device);
+            shutterInfos.handleCommand((RfLinkRtsDevice) device);
+        } catch (Exception ex) {
+            logger.error("OOOPS, processing device=" + device, ex);
+        }
+    }
+
+    private RfLinkRtsPositionHandler getShutterInfos(RfLinkHandler handler, RfLinkDevice device) {
+        RfLinkRtsPositionHandler shutterInfos = shutterInfosMap.get(device.getKey());
+        if (shutterInfos == null) {
+            synchronized (shutterInfosMap) {
+                shutterInfos = shutterInfosMap.get(device.getKey());
+                if (shutterInfos == null) {
+                    logger.debug("RTSHandler: create RtsHandler for " + device.getKey() + " on " + getThing().getUID());
+                    shutterInfos = new RfLinkRtsPositionHandler(handler);
+                    shutterInfosMap.put(device.getKey(), shutterInfos);
+                }
+            }
+        }
+        return shutterInfos;
+    }
+
 }

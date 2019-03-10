@@ -11,6 +11,7 @@ package org.openhab.binding.rflink.device;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.smarthome.core.library.types.PercentType;
 import org.eclipse.smarthome.core.library.types.StopMoveType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
@@ -34,7 +35,7 @@ import org.openhab.binding.rflink.type.RfLinkTypeUtils;
 public class RfLinkRtsDevice extends RfLinkAbstractDevice {
 
     public Command command = null;
-    public State state = null;
+    public State shutter = null;
 
     public RfLinkRtsDevice() {
     }
@@ -48,16 +49,18 @@ public class RfLinkRtsDevice extends RfLinkAbstractDevice {
     public String toString() {
         String str = "";
         str += super.toString();
-        str += ", State = " + state;
-        str += ", Command = " + command;
+        str += ", Shutter = " + shutter;
+        str += ", Command = " + command + "]";
         return str;
     }
 
     @Override
     public Map<String, State> getStates() {
         Map<String, State> map = new HashMap<>();
-        map.put(RfLinkBindingConstants.CHANNEL_SHUTTER, state);
-        map.put(RfLinkBindingConstants.CHANNEL_COMMAND, (State) command);
+        if (shutter != null && !UnDefType.UNDEF.equals(shutter)) {
+            map.put(RfLinkBindingConstants.CHANNEL_SHUTTER, shutter);
+        }
+        map.put(RfLinkBindingConstants.CHANNEL_COMMAND, command instanceof State ? (State) command : UnDefType.UNDEF);
         return map;
     }
 
@@ -66,12 +69,20 @@ public class RfLinkRtsDevice extends RfLinkAbstractDevice {
             throws RfLinkNotImpException, RfLinkException {
         super.initBaseMessageFromChannel(config, channelUID, triggeredCommand);
         this.command = getCommandAction(channelUID.getId(), triggeredCommand);
-        this.state = (State) RfLinkTypeUtils.getOnOffTypeFromType(command);
+        this.shutter = (State) RfLinkTypeUtils.getOnOffTypeFromType(command);
     }
 
     @Override
     public String getCommandSuffix() {
         return this.command.toString();
+    }
+
+    public Command getCommand() {
+        return command;
+    }
+
+    public State getState() {
+        return shutter;
     }
 
     public Command getCommandAction(String channelId, Type type) throws RfLinkException {
@@ -82,6 +93,9 @@ public class RfLinkRtsDevice extends RfLinkAbstractDevice {
                 if (type instanceof StopMoveType) {
                     // STOP action : easy to handle
                     command = StopMoveType.STOP;
+                } else if (type instanceof PercentType) {
+                    // PercentType will be processed by the RTS Position handler (if configured)
+                    command = (PercentType) type;
                 } else {
                     // try to match UP/DOWN switch type from input type
                     Type switchType = RfLinkTypeUtils.getUpDownTypeFromType(type);
@@ -97,4 +111,5 @@ public class RfLinkRtsDevice extends RfLinkAbstractDevice {
         }
         return getEffectiveCommand(command);
     }
+
 }

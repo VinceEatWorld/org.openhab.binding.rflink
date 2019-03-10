@@ -31,8 +31,8 @@ import org.openhab.binding.rflink.type.RfLinkTypeUtils;
  */
 public abstract class RfLinkAbstractDevice implements RfLinkDevice {
 
-    private boolean isCommandReversed = false;
     private RfLinkMessage message = null;
+    private RfLinkDeviceConfiguration config = null;
 
     @Override
     public void initializeFromMessage(RfLinkMessage message) {
@@ -54,12 +54,16 @@ public abstract class RfLinkAbstractDevice implements RfLinkDevice {
 
     public void initBaseMessageFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
             throws RfLinkNotImpException, RfLinkException {
+        this.config = config;
         message = new RfLinkMessage(config, channelUID, command);
-        this.isCommandReversed = config.isCommandReversed;
     }
 
     public RfLinkMessage getMessage() {
         return message;
+    }
+
+    public RfLinkDeviceConfiguration getConfig() {
+        return config;
     }
 
     @Override
@@ -93,7 +97,7 @@ public abstract class RfLinkAbstractDevice implements RfLinkDevice {
     }
 
     protected Command getEffectiveCommand(Command inputCommand) {
-        if (isCommandReversed) {
+        if (config != null && config.isCommandReversed) {
             // reverse the command
             Command effectiveCommand = (Command) RfLinkTypeUtils.getAntonym(inputCommand);
             if (effectiveCommand == null) {
@@ -107,7 +111,7 @@ public abstract class RfLinkAbstractDevice implements RfLinkDevice {
 
     @Override
     public String toString() {
-        return "RfLinkAbstractDevice [message=" + message + ", isCommandReversed=" + isCommandReversed + ", ]";
+        return "" + getClass().getSimpleName() + " [message=" + message + ", config=" + config + ", ]";
     }
 
 }

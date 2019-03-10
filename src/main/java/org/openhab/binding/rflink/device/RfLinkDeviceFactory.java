@@ -57,7 +57,7 @@ public class RfLinkDeviceFactory {
             MESSAGE_TO_DEVICE.put(m.eligibleMessageFunction(), _class);
             THINGTYPE_TO_CLASS.put(m.getThingType(), _class);
         } catch (InstantiationException | IllegalAccessException e) {
-
+            logger.error("Could not map RfLinkDevice type : " + _class);
         }
     }
 
@@ -76,9 +76,7 @@ public class RfLinkDeviceFactory {
                     throw new RfLinkException("unable to instanciate message object", e);
                 }
             }
-
         }
-
         throw new RfLinkNotImpException("No message implementation found for packet " + message.rawMessage);
     }
 

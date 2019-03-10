@@ -18,8 +18,6 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.apache.commons.io.IOUtils;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
@@ -158,10 +156,8 @@ public class RfLinkSerialConnector implements RfLinkConnectorInterface, SerialPo
             for (String message : messages) {
                 long towait = SEND_DELAY - (System.currentTimeMillis() - lastSend);
                 towait = Math.min(Math.max(towait, 0), SEND_DELAY);
-
+                logger.debug(">>> " + message);
                 byte[] messageData = (message + RfLinkBindingConstants.NEW_LINE).getBytes();
-                logger.debug("Send data (after {}ms, len={}): {}", towait, messageData.length,
-                        DatatypeConverter.printHexBinary(messageData));
                 if (towait > 0) {
                     try {
                         Thread.sleep(towait);

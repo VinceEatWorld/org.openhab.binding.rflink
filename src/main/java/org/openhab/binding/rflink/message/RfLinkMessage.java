@@ -70,17 +70,19 @@ public class RfLinkMessage {
         // Example : 20;31;Mebus;ID=c201;TEMP=00cf;
         // Example : 20;02;RTS;ID=82e8ac;SWITCH=01;CMD=DOWN;
         // Example : 20;07;Debug;RTS P1;a729000068622e;
-        if (size >= MINIMAL_SIZE_MESSAGE) {
+        if (size >= 3) {
             // first element should be "20"
             if (NODE_NUMBER_FROM_GATEWAY.equals(elements[0])) {
                 seqNbr = (byte) Integer.parseInt(elements[1], 16);
                 protocol = RfLinkDataParser.cleanString(elements[2]);
                 // build the key>value map
-                for (int i = 3; i < size; i++) {
-                    String[] keyValue = elements[i].split(VALUE_DELIMITER, 2);
-                    if (keyValue.length > 1) {
-                        // Raw values are stored, and will be decoded by sub implementations
-                        attributes.put(keyValue[0], keyValue[1]);
+                if (size >= 4) {
+                    for (int i = 3; i < size; i++) {
+                        String[] keyValue = elements[i].split(VALUE_DELIMITER, 2);
+                        if (keyValue.length > 1) {
+                            // Raw values are stored, and will be decoded by sub implementations
+                            attributes.put(keyValue[0], keyValue[1]);
+                        }
                     }
                 }
                 deviceId = attributes.get("ID");
@@ -91,17 +93,7 @@ public class RfLinkMessage {
 
     @Override
     public String toString() {
-        String str = "";
-        if (rawMessage == null) {
-            str += "Raw data = unknown";
-        } else {
-            str += "Raw= " + new String(rawMessage);
-            str += ", Seq= " + (short) (seqNbr & 0xFF);
-            str += ", Protocol= " + protocol;
-            str += ", Device= " + deviceId;
-            str += ", Switch=" + deviceSubId;
-        }
-        return str;
+        return getDeviceKey();
     }
 
     public String getRawMessage() {

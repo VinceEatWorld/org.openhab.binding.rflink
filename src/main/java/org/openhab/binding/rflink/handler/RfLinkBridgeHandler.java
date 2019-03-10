@@ -77,7 +77,6 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
         public synchronized void send() throws IOException {
             while (!queue.isEmpty()) {
                 RfLinkDevice device = queue.poll();
-                logger.debug("Transmitting message '{}'", device);
                 connector.sendMessages(device.buildMessages());
             }
         }
@@ -139,8 +138,8 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
 
                 @Override
                 public void run() {
-                    logger.debug("Checking RFLink transceiver connection, thing status = {}", thing.getStatus());
                     if (thing.getStatus() != ThingStatus.ONLINE) {
+                        logger.debug("Checking RFLink transceiver connection, thing status = {}", thing.getStatus());
                         connect();
                     }
                 }
@@ -191,8 +190,6 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
     }
 
     public synchronized void sendMessagesFromDevice(RfLinkDevice device) throws RfLinkException {
-        logger.debug("sendMessage: {}", device);
-
         try {
             transmitQueue.enqueue(device);
         } catch (IOException e) {
