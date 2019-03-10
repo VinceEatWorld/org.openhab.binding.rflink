@@ -204,16 +204,20 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
         public void packetReceived(String packet) {
             try {
                 RfLinkMessage message = new RfLinkMessage(packet);
-                RfLinkDevice device = RfLinkDeviceFactory.createDeviceFromMessage(message);
-                device.initializeFromMessage(message);
-                logger.debug("Message received: {}, running against {} listeners", device,
-                        deviceStatusListeners.size());
+                if (isDebugLogMessage(message)) {
+                    // ignore Debug & OK response messages...
+                } else {
+                    RfLinkDevice device = RfLinkDeviceFactory.createDeviceFromMessage(message);
+                    device.initializeFromMessage(message);
+                    logger.debug("Message received: {}, running against {} listeners", device,
+                            deviceStatusListeners.size());
 
-                for (DeviceMessageListener deviceStatusListener : deviceStatusListeners) {
-                    try {
-                        deviceStatusListener.onDeviceMessageReceived(getThing().getUID(), device);
-                    } catch (Exception e) {
-                        logger.error("An exception occurred while calling the DeviceStatusListener", e);
+                    for (DeviceMessageListener deviceStatusListener : deviceStatusListeners) {
+                        try {
+                            deviceStatusListener.onDeviceMessageReceived(getThing().getUID(), device);
+                        } catch (Exception e) {
+                            logger.error("An exception occurred while calling the DeviceStatusListener", e);
+                        }
                     }
                 }
 
@@ -230,6 +234,10 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
         public void errorOccured(String error) {
             logger.error("Error occured: {}", error);
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR);
+        }
+
+        private boolean isDebugLogMessage(RfLinkMessage message) {
+            return "Debug".equals(message.getProtocol()) || "OK".equals(message.getProtocol());
         }
     }
 
