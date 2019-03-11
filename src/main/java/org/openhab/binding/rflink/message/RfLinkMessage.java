@@ -39,9 +39,8 @@ public class RfLinkMessage {
     private final static String NODE_NUMBER_FROM_GATEWAY = "20";
     private final static String NODE_NUMBER_TO_GATEWAY = "10";
 
-    private static final String DEVICE_MASK = "00000000";
-
-    private final static int MINIMAL_SIZE_MESSAGE = 5;
+    private static final String DEVICE_MASK_8 = "00000000";
+    private static final String DEVICE_MASK_6 = "000000";
 
     public String rawMessage;
     private byte seqNbr = 0;
@@ -133,8 +132,7 @@ public class RfLinkMessage {
         StringBuilder message = new StringBuilder();
         appendToMessage(message, NODE_NUMBER_TO_GATEWAY); // To Bridge
         appendToMessage(message, this.getProtocol()); // Protocol
-        // convert channel to 8 character string, RfLink spec is a bit unclear on this, but seems to work...
-        appendToMessage(message, DEVICE_MASK.substring(deviceId.length()) + deviceId);
+        appendToMessage(message, formatDeviceId(deviceId));
         if (deviceSubId != null) {
             // some protocols, like X10 / Switch / RTS use multiple id parts
             appendToMessage(message, deviceSubId);
@@ -147,6 +145,18 @@ public class RfLinkMessage {
                 this.getProtocol(), deviceId, deviceSubId);
 
         return message.toString();
+    }
+
+    private String formatDeviceId(String deviceId) {
+        // convert deviceId to 6 or 8 char String, RfLink spec is a bit unclear on this, but seems to work...
+        if (deviceId.length() <= 6) {
+            return DEVICE_MASK_6.substring(deviceId.length()) + deviceId;
+        } else if (deviceId.length() <= 8) {
+            return DEVICE_MASK_8.substring(deviceId.length()) + deviceId;
+        } else {
+            // seems SOOOO long, don't know if the bridge will handle this
+            return deviceId;
+        }
     }
 
     private void appendToMessage(StringBuilder message, String element) {
