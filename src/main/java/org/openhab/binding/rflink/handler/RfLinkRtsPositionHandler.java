@@ -190,7 +190,7 @@ public class RfLinkRtsPositionHandler {
 
     private void sendDeviceCommand(RfLinkDevice device) {
         try {
-            handler.getBridgeHandler().sendMessagesFromDevice(device);
+            handler.getBridgeHandler().sendPackets(device.buildPackets());
         } catch (RfLinkException e) {
             logger.error("Could not send Device event " + device + " on bridge " + handler.getBridgeHandler(), e);
         }

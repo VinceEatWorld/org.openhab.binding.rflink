@@ -41,7 +41,7 @@ public interface RfLinkDevice {
      *
      * @return Collection of String messages to be send over serial. Several elements in case of composite command
      */
-    public Collection<String> buildMessages();
+    public Collection<String> buildPackets();
 
     /**
      * Procedure to get device unique Identifier

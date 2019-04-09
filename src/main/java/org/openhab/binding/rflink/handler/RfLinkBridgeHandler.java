@@ -9,6 +9,8 @@
 package org.openhab.binding.rflink.handler;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -28,7 +30,6 @@ import org.openhab.binding.rflink.config.RfLinkBridgeConfiguration;
 import org.openhab.binding.rflink.connector.RfLinkConnectorInterface;
 import org.openhab.binding.rflink.connector.RfLinkEventListener;
 import org.openhab.binding.rflink.connector.RfLinkSerialConnector;
-import org.openhab.binding.rflink.device.RfLinkAdminDevice;
 import org.openhab.binding.rflink.device.RfLinkDevice;
 import org.openhab.binding.rflink.device.RfLinkDeviceFactory;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
@@ -61,23 +62,23 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
     private ScheduledFuture<?> keepAliveTask = null;
 
     private class TransmitQueue {
-        private Queue<RfLinkDevice> queue = new LinkedBlockingQueue<RfLinkDevice>();
+        private Queue<Collection<String>> queue = new LinkedBlockingQueue<Collection<String>>();
 
-        public synchronized void enqueue(RfLinkDevice device) throws IOException {
+        public synchronized void enqueue(Collection<String> outputPackets) throws IOException {
             boolean wasEmpty = queue.isEmpty();
-            if (queue.offer(device)) {
+            if (queue.offer(outputPackets)) {
                 if (wasEmpty) {
                     send();
                 }
             } else {
-                logger.error("Transmit queue overflow. Lost message: {}", device);
+                logger.error("Transmit queue overflow. Lost message: {}", outputPackets);
             }
         }
 
         public synchronized void send() throws IOException {
             while (!queue.isEmpty()) {
-                RfLinkDevice device = queue.poll();
-                connector.sendMessages(device.buildMessages());
+                Collection<String> packets = queue.poll();
+                connector.sendMessages(packets);
             }
         }
     }
@@ -94,8 +95,7 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
             // do nothing
         } else if (command instanceof StringType) {
             try {
-                RfLinkAdminDevice device = new RfLinkAdminDevice(((StringType) command).toString());
-                sendMessagesFromDevice(device);
+                sendPackets(Collections.singleton(((StringType) command).toString()));
             } catch (RfLinkException e) {
                 logger.error("Unable to send command : " + command, e);
             }
@@ -150,7 +150,7 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
             keepAliveTask = scheduler.scheduleWithFixedDelay(() -> {
                 if (thing.getStatus() == ThingStatus.ONLINE) {
                     try {
-                        sendMessagesFromDevice(RfLinkAdminDevice.PING);
+                        sendPackets(Collections.singleton("10;PING;"));
                     } catch (RfLinkException ex) {
                         logger.error("PING call failed on Bridge", ex);
                     }
@@ -189,9 +189,9 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
         }
     }
 
-    public synchronized void sendMessagesFromDevice(RfLinkDevice device) throws RfLinkException {
+    public synchronized void sendPackets(Collection<String> packets) throws RfLinkException {
         try {
-            transmitQueue.enqueue(device);
+            transmitQueue.enqueue(packets);
         } catch (IOException e) {
             logger.error("I/O Error", e);
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());

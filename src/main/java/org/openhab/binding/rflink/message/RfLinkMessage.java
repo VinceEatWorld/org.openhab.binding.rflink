@@ -61,9 +61,9 @@ public class RfLinkMessage {
         }
     }
 
-    public RfLinkMessage(String data) {
-        rawMessage = data;
-        final String[] elements = data.split(FIELDS_DELIMITER);
+    public RfLinkMessage(String packet) {
+        rawMessage = packet;
+        final String[] elements = packet.split(FIELDS_DELIMITER);
         final int size = elements.length;
         // Every message should have at least 5 parts
         // Example : 20;31;Mebus;ID=c201;TEMP=00cf;
@@ -127,24 +127,24 @@ public class RfLinkMessage {
         return attributes.keySet();
     }
 
-    public String buildMessage(String suffix) {
+    public String buildPacket(String suffix) {
         // encode the message
-        StringBuilder message = new StringBuilder();
-        appendToMessage(message, NODE_NUMBER_TO_GATEWAY); // To Bridge
-        appendToMessage(message, this.getProtocol()); // Protocol
-        appendToMessage(message, formatDeviceId(deviceId));
+        StringBuilder packet = new StringBuilder();
+        appendToMessage(packet, NODE_NUMBER_TO_GATEWAY); // To Bridge
+        appendToMessage(packet, this.getProtocol()); // Protocol
+        appendToMessage(packet, formatDeviceId(deviceId));
         if (deviceSubId != null) {
             // some protocols, like X10 / Switch / RTS use multiple id parts
-            appendToMessage(message, deviceSubId);
+            appendToMessage(packet, deviceSubId);
         }
         if (suffix != null && !suffix.isEmpty()) {
-            appendToMessage(message, suffix);
+            appendToMessage(packet, suffix);
         }
 
-        logger.debug("Decoded message to be sent: {}, deviceName: {}, deviceChannel: {}, primaryId: {}", message,
+        logger.debug("Decoded message to be sent: {}, deviceName: {}, deviceChannel: {}, primaryId: {}", packet,
                 this.getProtocol(), deviceId, deviceSubId);
 
-        return message.toString();
+        return packet.toString();
     }
 
     private String formatDeviceId(String deviceId) {

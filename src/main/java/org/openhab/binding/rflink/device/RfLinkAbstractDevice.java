@@ -67,8 +67,8 @@ public abstract class RfLinkAbstractDevice implements RfLinkDevice {
     }
 
     @Override
-    public Collection<String> buildMessages() {
-        return Collections.singleton(getMessage().buildMessage(getCommandSuffix()));
+    public Collection<String> buildPackets() {
+        return Collections.singleton(getMessage().buildPacket(getCommandSuffix()));
     }
 
     // to override in subClasses if needed

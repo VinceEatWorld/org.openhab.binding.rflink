@@ -179,7 +179,7 @@ public class RfLinkColorDevice extends RfLinkAbstractDevice {
     }
 
     @Override
-    public Collection<String> buildMessages() {
+    public Collection<String> buildPackets() {
         logger.debug("Color decodeMessage: command={}, stateColor={}, stateOnOff={}", command, stateColor, stateOnOff);
 
         if (command == null) {
@@ -218,9 +218,9 @@ public class RfLinkColorDevice extends RfLinkAbstractDevice {
         }
 
         Collection<String> messages = new ArrayList<String>();
-        messages.add(getMessage().buildMessage(rgbw + ";" + cmdString));
+        messages.add(getMessage().buildPacket(rgbw + ";" + cmdString));
         if (sendBright) {
-            messages.add(getMessage().buildMessage(rgbw + ";BRIGHT"));
+            messages.add(getMessage().buildPacket(rgbw + ";BRIGHT"));
         }
         return messages;
     }

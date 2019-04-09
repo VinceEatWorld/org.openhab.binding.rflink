@@ -20,8 +20,6 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
  */
 public class RfLinkAdminDevice extends RfLinkAbstractDevice {
 
-    public static RfLinkAdminDevice PING = new RfLinkAdminDevice("10;PING;");
-
     private String rawMessage = null;
 
     public RfLinkAdminDevice() {
@@ -32,7 +30,7 @@ public class RfLinkAdminDevice extends RfLinkAbstractDevice {
     }
 
     @Override
-    public Collection<String> buildMessages() {
+    public Collection<String> buildPackets() {
         return Collections.singleton(rawMessage);
     }
 

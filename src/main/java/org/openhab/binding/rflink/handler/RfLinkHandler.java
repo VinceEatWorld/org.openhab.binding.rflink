@@ -8,6 +8,7 @@
  */
 package org.openhab.binding.rflink.handler;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -90,8 +91,9 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
                         handleRtsPositionTracker(this, device);
                     } else {
                         int repeats = Math.min(Math.max(getConfiguration().repeats, 1), 20);
+                        Collection<String> packets = device.buildPackets();
                         for (int i = 0; i < repeats; i++) {
-                            bridgeHandler.sendMessagesFromDevice(device);
+                            bridgeHandler.sendPackets(packets);
                         }
                         updateThingStates(device);
                     }
