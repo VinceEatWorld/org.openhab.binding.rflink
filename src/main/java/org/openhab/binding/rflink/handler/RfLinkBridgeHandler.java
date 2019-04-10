@@ -9,6 +9,7 @@
 package org.openhab.binding.rflink.handler;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -36,6 +37,8 @@ import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
 import org.openhab.binding.rflink.internal.DeviceMessageListener;
 import org.openhab.binding.rflink.message.RfLinkMessage;
+import org.openhab.binding.rflink.packet.RfLinkPacket;
+import org.openhab.binding.rflink.packet.RfLinkPacketType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,9 +65,9 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
     private ScheduledFuture<?> keepAliveTask = null;
 
     private class TransmitQueue {
-        private Queue<Collection<String>> queue = new LinkedBlockingQueue<Collection<String>>();
+        private Queue<Collection<RfLinkPacket>> queue = new LinkedBlockingQueue<Collection<RfLinkPacket>>();
 
-        public synchronized void enqueue(Collection<String> outputPackets) throws IOException {
+        public synchronized void enqueue(Collection<RfLinkPacket> outputPackets) throws IOException {
             boolean wasEmpty = queue.isEmpty();
             if (queue.offer(outputPackets)) {
                 if (wasEmpty) {
@@ -77,7 +80,7 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
 
         public synchronized void send() throws IOException {
             while (!queue.isEmpty()) {
-                Collection<String> packets = queue.poll();
+                Collection<RfLinkPacket> packets = queue.poll();
                 connector.sendMessages(packets);
             }
         }
@@ -95,7 +98,16 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
             // do nothing
         } else if (command instanceof StringType) {
             try {
-                sendPackets(Collections.singleton(((StringType) command).toString()));
+                RfLinkPacketType packetType = null;
+                if ("output".equals(channelUID.getId())) {
+                    packetType = RfLinkPacketType.OUTPUT;
+                } else if ("echo".equals(channelUID.getId())) {
+                    packetType = RfLinkPacketType.ECHO;
+                } else {
+                    logger.error("ChannelUID" + channelUID + " not supported on Bridge");
+                }
+                RfLinkPacket packet = new RfLinkPacket(packetType, ((StringType) command).toString());
+                processPackets(Collections.singleton(packet));
             } catch (RfLinkException e) {
                 logger.error("Unable to send command : " + command, e);
             }
@@ -150,7 +162,7 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
             keepAliveTask = scheduler.scheduleWithFixedDelay(() -> {
                 if (thing.getStatus() == ThingStatus.ONLINE) {
                     try {
-                        sendPackets(Collections.singleton("10;PING;"));
+                        processPackets(Collections.singleton(new RfLinkPacket(RfLinkPacketType.OUTPUT, "10;PING;")));
                     } catch (RfLinkException ex) {
                         logger.error("PING call failed on Bridge", ex);
                     }
@@ -189,21 +201,36 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
         }
     }
 
-    public synchronized void sendPackets(Collection<String> packets) throws RfLinkException {
-        try {
-            transmitQueue.enqueue(packets);
-        } catch (IOException e) {
-            logger.error("I/O Error", e);
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
+    public synchronized void processPackets(Collection<RfLinkPacket> rfLinkPackets) throws RfLinkException {
+        Collection<RfLinkPacket> echoPackets = new ArrayList<RfLinkPacket>();
+        Collection<RfLinkPacket> sendPackets = new ArrayList<RfLinkPacket>();
+        for (RfLinkPacket rfLinkPacket : rfLinkPackets) {
+            if (RfLinkPacketType.ECHO.equals(rfLinkPacket.getType())) {
+                echoPackets.add(rfLinkPacket);
+            } else if (RfLinkPacketType.OUTPUT.equals(rfLinkPacket.getType())) {
+                sendPackets.add(rfLinkPacket);
+            }
+        }
+        if (!echoPackets.isEmpty()) {
+            for (RfLinkPacket echoPacket : echoPackets) {
+                eventListener.packetReceived(echoPacket);
+            }
+        } else if (!sendPackets.isEmpty()) {
+            try {
+                transmitQueue.enqueue(sendPackets);
+            } catch (IOException e) {
+                logger.error("I/O Error", e);
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
+            }
         }
     }
 
     private class MessageListener implements RfLinkEventListener {
 
         @Override
-        public void packetReceived(String packet) {
+        public synchronized void packetReceived(RfLinkPacket rfLinkPacket) {
             try {
-                RfLinkMessage message = new RfLinkMessage(packet);
+                RfLinkMessage message = new RfLinkMessage(rfLinkPacket);
                 if (isDebugLogMessage(message)) {
                     // ignore Debug & OK response messages...
                 } else {
@@ -222,9 +249,10 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
                 }
 
             } catch (RfLinkNotImpException e) {
-                logger.debug("Message not supported, data: {}", packet.toString());
+                logger.debug("Message not supported, data: {}", rfLinkPacket.toString());
             } catch (RfLinkException e) {
-                logger.error("Error occured during packet receiving, data: {}; {}", packet.toString(), e.getMessage());
+                logger.error("Error occured during packet receiving, data: {}; {}", rfLinkPacket.toString(),
+                        e.getMessage());
             }
 
             updateStatus(ThingStatus.ONLINE);

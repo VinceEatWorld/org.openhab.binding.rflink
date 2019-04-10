@@ -21,6 +21,8 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
+import org.openhab.binding.rflink.packet.RfLinkPacket;
+import org.openhab.binding.rflink.packet.RfLinkPacketType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,18 +148,18 @@ public class RfLinkSerialConnector implements RfLinkConnectorInterface, SerialPo
     }
 
     @Override
-    public void sendMessages(Collection<String> messages) throws IOException {
+    public void sendMessages(Collection<RfLinkPacket> packets) throws IOException {
         if (output == null) {
             throw new IOException("Not connected, sending messages is not possible");
         }
 
         synchronized (this) {
 
-            for (String message : messages) {
+            for (RfLinkPacket packet : packets) {
                 long towait = SEND_DELAY - (System.currentTimeMillis() - lastSend);
                 towait = Math.min(Math.max(towait, 0), SEND_DELAY);
-                logger.debug(">>> " + message);
-                byte[] messageData = (message + RfLinkBindingConstants.NEW_LINE).getBytes();
+                logger.debug(">>> " + packet);
+                byte[] messageData = (packet.getPacket() + RfLinkBindingConstants.NEW_LINE).getBytes();
                 if (towait > 0) {
                     try {
                         Thread.sleep(towait);
@@ -184,12 +186,12 @@ public class RfLinkSerialConnector implements RfLinkConnectorInterface, SerialPo
         _listeners.remove(listener);
     }
 
-    private void sendMsgToListeners(String msg) {
+    private void sendPacketToListeners(RfLinkPacket packet) {
         try {
             Iterator<RfLinkEventListener> iterator = _listeners.iterator();
 
             while (iterator.hasNext()) {
-                iterator.next().packetReceived(msg);
+                iterator.next().packetReceived(packet);
             }
 
         } catch (Exception e) {
@@ -216,7 +218,7 @@ public class RfLinkSerialConnector implements RfLinkConnectorInterface, SerialPo
             try {
                 String inputLine = input.readLine();
                 logger.debug("<<< {}", inputLine);
-                sendMsgToListeners(inputLine);
+                sendPacketToListeners(new RfLinkPacket(RfLinkPacketType.INPUT, inputLine));
             } catch (Exception e) {
                 logger.error("{}", e.toString());
             }

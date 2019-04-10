@@ -32,6 +32,7 @@ import org.openhab.binding.rflink.device.RfLinkRtsDevice;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
 import org.openhab.binding.rflink.internal.DeviceMessageListener;
+import org.openhab.binding.rflink.packet.RfLinkPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,9 +92,9 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
                         handleRtsPositionTracker(this, device);
                     } else {
                         int repeats = Math.min(Math.max(getConfiguration().repeats, 1), 20);
-                        Collection<String> packets = device.buildPackets();
+                        Collection<RfLinkPacket> packets = device.buildPackets();
                         for (int i = 0; i < repeats; i++) {
-                            bridgeHandler.sendPackets(packets);
+                            bridgeHandler.processPackets(packets);
                         }
                         updateThingStates(device);
                     }

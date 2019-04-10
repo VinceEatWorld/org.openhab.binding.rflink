@@ -18,6 +18,8 @@ import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.device.RfLinkDataParser;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
+import org.openhab.binding.rflink.packet.RfLinkPacket;
+import org.openhab.binding.rflink.packet.RfLinkPacketType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,9 +63,9 @@ public class RfLinkMessage {
         }
     }
 
-    public RfLinkMessage(String packet) {
-        rawMessage = packet;
-        final String[] elements = packet.split(FIELDS_DELIMITER);
+    public RfLinkMessage(RfLinkPacket packet) {
+        rawMessage = packet.getPacket();
+        final String[] elements = packet.getPacket().split(FIELDS_DELIMITER);
         final int size = elements.length;
         // Every message should have at least 5 parts
         // Example : 20;31;Mebus;ID=c201;TEMP=00cf;
@@ -145,6 +147,11 @@ public class RfLinkMessage {
                 this.getProtocol(), deviceId, deviceSubId);
 
         return packet.toString();
+    }
+
+    public RfLinkPacket buildRfLinkPacket(RfLinkPacketType type, String suffix) {
+        String packet = buildPacket(suffix);
+        return new RfLinkPacket(type, packet);
     }
 
     private String formatDeviceId(String deviceId) {

@@ -11,6 +11,8 @@ package org.openhab.binding.rflink.connector;
 import java.io.IOException;
 import java.util.Collection;
 
+import org.openhab.binding.rflink.packet.RfLinkPacket;
+
 /**
  * This interface defines interface to communicate RFLink controller.
  *
@@ -40,7 +42,7 @@ public interface RfLinkConnectorInterface {
      * @param data
      *                 raw bytes.
      */
-    public void sendMessages(Collection<String> messagesData) throws IOException;
+    public void sendMessages(Collection<RfLinkPacket> messagesData) throws IOException;
 
     /**
      * Procedure for register event listener.

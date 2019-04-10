@@ -20,6 +20,7 @@ import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
 import org.openhab.binding.rflink.message.RfLinkMessage;
+import org.openhab.binding.rflink.packet.RfLinkPacket;
 
 /**
  * This interface defines interface which every device class should implement.
@@ -37,11 +38,13 @@ public interface RfLinkDevice {
     public Predicate<RfLinkMessage> eligibleMessageFunction();
 
     /**
-     * Procedure generate message[s] to send to the bridge
+     * Procedure generate RfLinkPacket[s] to send to the bridge
      *
-     * @return Collection of String messages to be send over serial. Several elements in case of composite command
+     * @return Collection of RfLinkPacket messages to be send over serial (OUTPUT type) or to handle as incoming events
+     *         (ECHO type). Several elements in case of composite command
      */
-    public Collection<String> buildPackets();
+
+    public Collection<RfLinkPacket> buildPackets();
 
     /**
      * Procedure to get device unique Identifier

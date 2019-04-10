@@ -9,7 +9,8 @@
 		<description>This is universal RFLink transceiver bridge for manual configuration purposes.</description>
 
         <channels>
-            <channel id="rawdata" typeId="rawdata" />
+            <channel id="output" typeId="rawdata" />
+            <channel id="echo" typeId="echodata" />
         </channels>
             
 		<config-description>

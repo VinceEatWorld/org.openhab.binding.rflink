@@ -45,6 +45,13 @@
         <state readOnly="false"></state>
     </channel-type>
     
+    <channel-type id="echodata">
+        <item-type>String</item-type>
+        <label>Echo transmission</label>
+        <description>Echo as input packet</description>
+        <state readOnly="false"></state>
+    </channel-type>
+    
 	<channel-type id="status">
 		<item-type>String</item-type>
 		<label>Status</label>

@@ -28,6 +28,8 @@ import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
 import org.openhab.binding.rflink.message.RfLinkMessage;
+import org.openhab.binding.rflink.packet.RfLinkPacket;
+import org.openhab.binding.rflink.packet.RfLinkPacketType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -179,7 +181,7 @@ public class RfLinkColorDevice extends RfLinkAbstractDevice {
     }
 
     @Override
-    public Collection<String> buildPackets() {
+    public Collection<RfLinkPacket> buildPackets() {
         logger.debug("Color decodeMessage: command={}, stateColor={}, stateOnOff={}", command, stateColor, stateOnOff);
 
         if (command == null) {
@@ -217,10 +219,10 @@ public class RfLinkColorDevice extends RfLinkAbstractDevice {
             cmdString = "ON";
         }
 
-        Collection<String> messages = new ArrayList<String>();
-        messages.add(getMessage().buildPacket(rgbw + ";" + cmdString));
+        Collection<RfLinkPacket> messages = new ArrayList<RfLinkPacket>();
+        messages.add(getMessage().buildRfLinkPacket(RfLinkPacketType.OUTPUT, rgbw + ";" + cmdString));
         if (sendBright) {
-            messages.add(getMessage().buildPacket(rgbw + ";BRIGHT"));
+            messages.add(getMessage().buildRfLinkPacket(RfLinkPacketType.OUTPUT, rgbw + ";BRIGHT"));
         }
         return messages;
     }

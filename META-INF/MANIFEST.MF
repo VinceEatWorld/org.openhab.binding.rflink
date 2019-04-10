@@ -40,4 +40,5 @@ Export-Package:
    org.eclipse.smarthome.core.types,
    org.openhab.binding.rflink.connector",
  org.openhab.binding.rflink.message;x-internal:=true,
- org.openhab.binding.rflink.type;x-internal:=true
+ org.openhab.binding.rflink.type;x-internal:=true,
+ org.openhab.binding.rflink.packet;x-internal:=true

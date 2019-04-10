@@ -20,6 +20,8 @@ import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
 import org.openhab.binding.rflink.message.RfLinkMessage;
+import org.openhab.binding.rflink.packet.RfLinkPacket;
+import org.openhab.binding.rflink.packet.RfLinkPacketType;
 import org.openhab.binding.rflink.type.RfLinkTypeUtils;
 
 /**
@@ -67,8 +69,8 @@ public abstract class RfLinkAbstractDevice implements RfLinkDevice {
     }
 
     @Override
-    public Collection<String> buildPackets() {
-        return Collections.singleton(getMessage().buildPacket(getCommandSuffix()));
+    public Collection<RfLinkPacket> buildPackets() {
+        return Collections.singleton(getMessage().buildRfLinkPacket(RfLinkPacketType.OUTPUT, getCommandSuffix()));
     }
 
     // to override in subClasses if needed
