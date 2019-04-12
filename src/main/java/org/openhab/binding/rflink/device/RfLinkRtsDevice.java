@@ -76,8 +76,8 @@ public class RfLinkRtsDevice extends RfLinkAbstractDevice {
     }
 
     @Override
-    public void initializeFromMessage(RfLinkMessage message) {
-        super.initializeFromMessage(message);
+    public void initializeFromMessage(RfLinkDeviceConfiguration config, RfLinkMessage message) {
+        super.initializeFromMessage(config, message);
         Map<String, String> values = getMessage().getAttributes();
         if (values.containsKey(KEY_CMD)) {
             command = (Command) RfLinkTypeUtils.getTypeFromStringValue(values.get(KEY_CMD));

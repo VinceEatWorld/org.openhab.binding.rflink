@@ -27,6 +27,7 @@ import org.openhab.binding.rflink.packet.RfLinkPacket;
  *
  * @author Cyril Cauchois - Initial contribution
  * @author cartemere - refactoring + define Predicate
+ * @author cartemere - use Config in initialize
  */
 public interface RfLinkDevice {
 
@@ -92,10 +93,13 @@ public interface RfLinkDevice {
 
     /**
      * Initializes Device from reception message
-     *
+     * 
+     * @param config  TODO
      * @param message the RfLink message received from the bridge
+     *
      * @throws RfLinkNotImpException
      * @throws RfLinkException
      */
-    void initializeFromMessage(RfLinkMessage message) throws RfLinkNotImpException, RfLinkException;
+    void initializeFromMessage(RfLinkDeviceConfiguration config, RfLinkMessage message)
+            throws RfLinkNotImpException, RfLinkException;
 }

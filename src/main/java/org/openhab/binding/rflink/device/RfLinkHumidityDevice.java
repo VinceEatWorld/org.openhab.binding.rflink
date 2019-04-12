@@ -15,6 +15,7 @@ import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
+import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.message.RfLinkMessage;
 
 /**
@@ -37,8 +38,8 @@ public class RfLinkHumidityDevice extends RfLinkAbstractDevice {
     }
 
     @Override
-    public void initializeFromMessage(RfLinkMessage message) {
-        super.initializeFromMessage(message);
+    public void initializeFromMessage(RfLinkDeviceConfiguration config, RfLinkMessage message) {
+        super.initializeFromMessage(config, message);
         Map<String, String> values = getMessage().getAttributes();
         if (values.containsKey(KEY_HUMIDITY)) {
             humidity = Integer.parseInt(values.get(KEY_HUMIDITY));

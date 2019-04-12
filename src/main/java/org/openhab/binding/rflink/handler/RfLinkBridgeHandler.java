@@ -31,11 +31,9 @@ import org.openhab.binding.rflink.config.RfLinkBridgeConfiguration;
 import org.openhab.binding.rflink.connector.RfLinkConnectorInterface;
 import org.openhab.binding.rflink.connector.RfLinkEventListener;
 import org.openhab.binding.rflink.connector.RfLinkSerialConnector;
-import org.openhab.binding.rflink.device.RfLinkDevice;
-import org.openhab.binding.rflink.device.RfLinkDeviceFactory;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
-import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
 import org.openhab.binding.rflink.internal.DeviceMessageListener;
+import org.openhab.binding.rflink.internal.discovery.RfLinkDeviceDiscoveryService;
 import org.openhab.binding.rflink.message.RfLinkMessage;
 import org.openhab.binding.rflink.packet.RfLinkPacket;
 import org.openhab.binding.rflink.packet.RfLinkPacketType;
@@ -50,6 +48,7 @@ import org.slf4j.LoggerFactory;
  * @author Cyril Cauchois - Initial contribution
  * @author John Jore - Added initial support to transmit messages to devices
  * @author Marvyn Zalewski - Added getConfiguration Method
+ * @author cartemere - refactor to provide Handler config to the Device + rework Discovery
  */
 public class RfLinkBridgeHandler extends BaseBridgeHandler {
 
@@ -58,6 +57,7 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
     RfLinkConnectorInterface connector = null;
     private MessageListener eventListener = new MessageListener();
 
+    private RfLinkDeviceDiscoveryService discoveryService = null;
     private List<DeviceMessageListener> deviceStatusListeners = new CopyOnWriteArrayList<>();
 
     private RfLinkBridgeConfiguration configuration = null;
@@ -229,32 +229,35 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
 
         @Override
         public synchronized void packetReceived(RfLinkPacket rfLinkPacket) {
-            try {
-                RfLinkMessage message = new RfLinkMessage(rfLinkPacket);
-                if (isDebugLogMessage(message)) {
-                    // ignore Debug & OK response messages...
-                } else {
-                    RfLinkDevice device = RfLinkDeviceFactory.createDeviceFromMessage(message);
-                    device.initializeFromMessage(message);
-                    logger.debug("Message received: {}, running against {} listeners", device,
-                            deviceStatusListeners.size());
-
-                    for (DeviceMessageListener deviceStatusListener : deviceStatusListeners) {
+            RfLinkMessage message = new RfLinkMessage(rfLinkPacket);
+            if (isDebugLogMessage(message)) {
+                // ignore Debug & OK response messages...
+            } else {
+                boolean hasBeenProcessed = false;
+                // 1 - HANDLE DEVICE LISTENERS
+                for (DeviceMessageListener deviceStatusListener : deviceStatusListeners) {
+                    try {
+                        hasBeenProcessed = hasBeenProcessed
+                                || deviceStatusListener.handleIncomingMessage(getThing().getUID(), message);
+                    } catch (Exception e) {
+                        logger.error(
+                                "An exception occurred while calling the DeviceStatusListener for message " + message,
+                                e);
+                    }
+                }
+                // 2 - HANDLE DISCOVERY
+                if (!hasBeenProcessed) {
+                    // current message is "unknown" (i.e. not handled by any existing Handler)
+                    if (discoveryService != null && !getConfiguration().disableDiscovery) {
                         try {
-                            deviceStatusListener.onDeviceMessageReceived(getThing().getUID(), device);
+                            discoveryService.discoverThing(getThing().getUID(), message);
                         } catch (Exception e) {
-                            logger.error("An exception occurred while calling the DeviceStatusListener", e);
+                            logger.error("An exception occurred while registring message to the DiscoveryService : "
+                                    + message, e);
                         }
                     }
                 }
-
-            } catch (RfLinkNotImpException e) {
-                logger.debug("Message not supported, data: {}", rfLinkPacket.toString());
-            } catch (RfLinkException e) {
-                logger.error("Error occured during packet receiving, data: {}; {}", rfLinkPacket.toString(),
-                        e.getMessage());
             }
-
             updateStatus(ThingStatus.ONLINE);
         }
 
@@ -287,4 +290,9 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
     public RfLinkBridgeConfiguration getConfiguration() {
         return configuration;
     }
+
+    public void setDiscoveryService(RfLinkDeviceDiscoveryService discoveryService) {
+        this.discoveryService = discoveryService;
+    }
+
 }

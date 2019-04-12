@@ -24,6 +24,7 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
+import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.message.RfLinkMessage;
 
@@ -107,8 +108,8 @@ public class RfLinkTempHygroDevice extends RfLinkAbstractDevice {
     }
 
     @Override
-    public void initializeFromMessage(RfLinkMessage message) {
-        super.initializeFromMessage(message);
+    public void initializeFromMessage(RfLinkDeviceConfiguration config, RfLinkMessage message) {
+        super.initializeFromMessage(config, message);
         Map<String, String> values = getMessage().getAttributes();
         if (values.containsKey(KEY_TEMPERATURE)) {
             temperature = RfLinkDataParser.parseHexaToSignedDecimal(values.get(KEY_TEMPERATURE));

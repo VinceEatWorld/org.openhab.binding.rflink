@@ -95,8 +95,8 @@ public class RfLinkColorDevice extends RfLinkAbstractDevice {
     }
 
     @Override
-    public void initializeFromMessage(RfLinkMessage message) {
-        super.initializeFromMessage(message);
+    public void initializeFromMessage(RfLinkDeviceConfiguration config, RfLinkMessage message) {
+        super.initializeFromMessage(config, message);
         Map<String, String> values = getMessage().getAttributes();
         if (values.containsKey(KEY_RGBW)) {
             String rgbw = values.get(KEY_RGBW);

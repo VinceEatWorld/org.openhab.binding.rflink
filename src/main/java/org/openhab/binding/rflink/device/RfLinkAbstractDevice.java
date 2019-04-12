@@ -37,7 +37,7 @@ public abstract class RfLinkAbstractDevice implements RfLinkDevice {
     private RfLinkDeviceConfiguration config = null;
 
     @Override
-    public void initializeFromMessage(RfLinkMessage message) {
+    public void initializeFromMessage(RfLinkDeviceConfiguration config, RfLinkMessage message) {
         this.message = message;
     }
 

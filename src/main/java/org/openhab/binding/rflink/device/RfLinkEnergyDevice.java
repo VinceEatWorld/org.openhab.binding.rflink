@@ -19,6 +19,7 @@ import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
+import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.message.RfLinkMessage;
 
 /**
@@ -63,8 +64,8 @@ public class RfLinkEnergyDevice extends RfLinkAbstractDevice {
     }
 
     @Override
-    public void initializeFromMessage(RfLinkMessage message) {
-        super.initializeFromMessage(message);
+    public void initializeFromMessage(RfLinkDeviceConfiguration config, RfLinkMessage message) {
+        super.initializeFromMessage(config, message);
         Map<String, String> values = getMessage().getAttributes();
         // all usage is reported in Watts based on 230V
         if (values.containsKey(KEY_INSTANT_POWER)) {

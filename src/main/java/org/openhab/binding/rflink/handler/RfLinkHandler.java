@@ -32,6 +32,7 @@ import org.openhab.binding.rflink.device.RfLinkRtsDevice;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
 import org.openhab.binding.rflink.internal.DeviceMessageListener;
+import org.openhab.binding.rflink.message.RfLinkMessage;
 import org.openhab.binding.rflink.packet.RfLinkPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,7 @@ import org.slf4j.LoggerFactory;
  * @author John Jore - Added initial support to send commands to devices
  * @author Arjan Mels - Added option to repeat messages
  * @author cartemere - handle RTS position tracking
+ * @author cartemere - refactor to provide Handler config to the Device
  */
 public class RfLinkHandler extends BaseThingHandler implements DeviceMessageListener {
 
@@ -86,7 +88,7 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
             } else {
                 try {
                     RfLinkDevice device = RfLinkDeviceFactory.createDeviceFromType(getThing().getThingTypeUID());
-                    device.initializeFromChannel(getConfigAs(RfLinkDeviceConfiguration.class), channelUID, command);
+                    device.initializeFromChannel(config, channelUID, command);
                     if (isRtsPositionTrackerEnabled(device)) {
                         // need specific handling : the command is processed by the tracker
                         handleRtsPositionTracker(this, device);
@@ -107,8 +109,24 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
         }
     }
 
-    /**
-     */
+    @Override
+    public boolean handleIncomingMessage(ThingUID bridge, RfLinkMessage incomingMessage) throws Exception {
+        String id = incomingMessage.getDeviceKey();
+        if (config != null && id.equals(config.deviceId)) {
+            RfLinkDevice device = RfLinkDeviceFactory.createDeviceFromMessage(incomingMessage);
+            device.initializeFromMessage(config, incomingMessage);
+            updateStatus(ThingStatus.ONLINE);
+            if (isRtsPositionTrackerEnabled(device)) {
+                handleRtsPositionTracker(this, device);
+            } else {
+                updateThingStates(device);
+            }
+            return true;
+        }
+        return false;
+
+    }
+
     @Override
     public void initialize() {
         config = getConfigAs(RfLinkDeviceConfiguration.class);
@@ -162,23 +180,6 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
         }
         bridgeHandler = null;
         super.dispose();
-    }
-
-    @Override
-    public void onDeviceMessageReceived(ThingUID bridge, RfLinkDevice device) {
-        String id = device.getKey();
-        // logger.debug("Matching Message from bridge {} from device [{}] with [{}]", bridge.toString(), id,
-        // config.deviceId);
-        if (config.deviceId.equals(id)) {
-            logger.debug("Message from bridge {} from device [{}] type [{}] matched", bridge.toString(), id,
-                    device.getClass().getSimpleName());
-            updateStatus(ThingStatus.ONLINE);
-            if (isRtsPositionTrackerEnabled(device)) {
-                handleRtsPositionTracker(this, device);
-            } else {
-                updateThingStates(device);
-            }
-        }
     }
 
     protected void updateThingStates(RfLinkDevice device) {
