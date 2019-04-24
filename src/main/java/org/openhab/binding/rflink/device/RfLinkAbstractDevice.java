@@ -30,6 +30,7 @@ import org.openhab.binding.rflink.type.RfLinkTypeUtils;
  * @author Cyril Cauchois - Initial contribution
  * @author cartemere - review Message management. add Reverse support for Switch/RTS
  * @author cartemere - Massive rework : split message vs device
+ * @author cartemere - simplify initFromChannel & configuration management
  */
 public abstract class RfLinkAbstractDevice implements RfLinkDevice {
 
@@ -38,26 +39,33 @@ public abstract class RfLinkAbstractDevice implements RfLinkDevice {
 
     @Override
     public void initializeFromMessage(RfLinkDeviceConfiguration config, RfLinkMessage message) {
+        setConfig(config);
         this.message = message;
     }
 
     @Override
     public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
             throws RfLinkNotImpException, RfLinkException {
-        throw new RfLinkNotImpException("Message handler for " + config + "/" + channelUID
-                + " does not support command transmission " + command);
+        setConfig(config);
+        message = new RfLinkMessage(config, channelUID, command);
+        if (!handleCommandTransmission()) {
+            throw new RfLinkNotImpException("Message handler for " + config + "/" + channelUID
+                    + " does not support command transmission " + command);
+        }
+    }
+
+    protected boolean handleCommandTransmission() {
+        return false;
+    }
+
+    protected void setConfig(RfLinkDeviceConfiguration config) {
+        this.config = config;
     }
 
     @Override
     public Predicate<RfLinkMessage> eligibleMessageFunction() {
         // by default = do NOT handle any kind of message (to override in subclasses)
         return (message) -> false;
-    }
-
-    public void initBaseMessageFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
-            throws RfLinkNotImpException, RfLinkException {
-        this.config = config;
-        message = new RfLinkMessage(config, channelUID, command);
     }
 
     public RfLinkMessage getMessage() {

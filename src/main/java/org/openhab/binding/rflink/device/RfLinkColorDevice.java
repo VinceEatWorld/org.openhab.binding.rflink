@@ -135,7 +135,7 @@ public class RfLinkColorDevice extends RfLinkAbstractDevice {
     @Override
     public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command triggeredCommand)
             throws RfLinkNotImpException, RfLinkException {
-        super.initBaseMessageFromChannel(config, channelUID, triggeredCommand);
+        super.initializeFromChannel(config, channelUID, triggeredCommand);
 
         logger.debug("Color initializeFromChannel: deviceid={}, state={}, class={}, command={}", getKey(),
                 currentState.get(getKey()), triggeredCommand.getClass().getSimpleName(), triggeredCommand);
@@ -178,6 +178,11 @@ public class RfLinkColorDevice extends RfLinkAbstractDevice {
         }
         currentState.put(getKey(), stateColor);
         logger.debug("Color initializeFromChannel: state={}", stateColor);
+    }
+
+    @Override
+    protected boolean handleCommandTransmission() {
+        return true;
     }
 
     @Override

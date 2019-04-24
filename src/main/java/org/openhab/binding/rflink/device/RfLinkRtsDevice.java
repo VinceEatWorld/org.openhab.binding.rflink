@@ -88,11 +88,16 @@ public class RfLinkRtsDevice extends RfLinkAbstractDevice {
     @Override
     public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command triggeredCommand)
             throws RfLinkNotImpException, RfLinkException {
-        super.initBaseMessageFromChannel(config, channelUID, triggeredCommand);
+        super.initializeFromChannel(config, channelUID, triggeredCommand);
         command = getCommandAction(channelUID.getId(), triggeredCommand);
         if (!(config.shutterDuration > 0)) {
             shutter = (State) RfLinkTypeUtils.getOnOffTypeFromType(command);
         }
+    }
+
+    @Override
+    protected boolean handleCommandTransmission() {
+        return true;
     }
 
     @Override

@@ -132,8 +132,13 @@ public class RfLinkSwitchDevice extends RfLinkAbstractDevice {
     @Override
     public void initializeFromChannel(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command triggeredCommand)
             throws RfLinkNotImpException, RfLinkException {
-        super.initBaseMessageFromChannel(config, channelUID, triggeredCommand);
+        super.initializeFromChannel(config, channelUID, triggeredCommand);
         initializeCommandFromTriggeredCommand(triggeredCommand);
+    }
+
+    @Override
+    protected boolean handleCommandTransmission() {
+        return true;
     }
 
     private void initializeCommandFromTriggeredCommand(Command triggeredCommand) {
