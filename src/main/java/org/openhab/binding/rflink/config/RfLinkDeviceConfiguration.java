@@ -19,6 +19,9 @@ public class RfLinkDeviceConfiguration {
     // Device Id
     public String deviceId;
 
+    // Linked Adress Id
+    public String linkedAddressId = null;
+
     // Number of times to repeat a message
     public int repeats = 1;
 
@@ -32,6 +35,10 @@ public class RfLinkDeviceConfiguration {
     public String toString() {
         return "RfLinkDeviceConfiguration[" + deviceId + "] x" + repeats + " " + (isCommandReversed ? "reversed " : "")
                 + (shutterDuration > 0 ? "timing=" + shutterDuration + "s" : "");
+    }
+
+    public boolean hasLinkedAddressId() {
+        return linkedAddressId != null && !linkedAddressId.trim().isEmpty();
     }
 
 }

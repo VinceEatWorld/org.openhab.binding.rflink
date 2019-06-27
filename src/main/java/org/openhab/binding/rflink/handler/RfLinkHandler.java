@@ -89,15 +89,12 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
                 try {
                     RfLinkDevice device = RfLinkDeviceFactory.createDeviceFromType(getThing().getThingTypeUID());
                     device.initializeFromChannel(config, channelUID, command);
+                    processEchoPackets(device);
                     if (isRtsPositionTrackerEnabled(device)) {
                         // need specific handling : the command is processed by the tracker
                         handleRtsPositionTracker(this, device);
                     } else {
-                        int repeats = Math.min(Math.max(getConfiguration().repeats, 1), 20);
-                        Collection<RfLinkPacket> packets = device.buildPackets();
-                        for (int i = 0; i < repeats; i++) {
-                            bridgeHandler.processPackets(packets);
-                        }
+                        processOutputPackets(device);
                         updateThingStates(device);
                     }
                 } catch (RfLinkNotImpException e) {
@@ -112,9 +109,10 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
     @Override
     public boolean handleIncomingMessage(ThingUID bridge, RfLinkMessage incomingMessage) throws Exception {
         String id = incomingMessage.getDeviceKey();
-        if (config != null && id.equals(config.deviceId)) {
+        if (config != null && id.equalsIgnoreCase(config.deviceId)) {
             RfLinkDevice device = RfLinkDeviceFactory.createDeviceFromMessage(incomingMessage);
             device.initializeFromMessage(config, incomingMessage);
+            processEchoPackets(device);
             updateStatus(ThingStatus.ONLINE);
             if (isRtsPositionTrackerEnabled(device)) {
                 handleRtsPositionTracker(this, device);
@@ -124,7 +122,19 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
             return true;
         }
         return false;
+    }
 
+    private void processOutputPackets(RfLinkDevice device) throws RfLinkException {
+        int repeats = Math.min(Math.max(getConfiguration().repeats, 1), 20);
+        Collection<RfLinkPacket> packets = device.buildOutputPackets();
+        for (int i = 0; i < repeats; i++) {
+            bridgeHandler.processPackets(packets);
+        }
+    }
+
+    private void processEchoPackets(RfLinkDevice device) throws RfLinkException {
+        Collection<RfLinkPacket> echoPackets = device.buildEchoPackets();
+        bridgeHandler.processPackets(echoPackets);
     }
 
     @Override
@@ -219,6 +229,11 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
             }
         }
         return shutterInfos;
+    }
+
+    @Override
+    public String toString() {
+        return "RfLinkHandler [" + config + "]";
     }
 
 }

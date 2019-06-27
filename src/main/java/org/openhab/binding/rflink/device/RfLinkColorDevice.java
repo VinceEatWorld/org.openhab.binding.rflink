@@ -186,7 +186,7 @@ public class RfLinkColorDevice extends RfLinkAbstractDevice {
     }
 
     @Override
-    public Collection<RfLinkPacket> buildPackets() {
+    public Collection<RfLinkPacket> buildOutputPackets() {
         logger.debug("Color decodeMessage: command={}, stateColor={}, stateOnOff={}", command, stateColor, stateOnOff);
 
         if (command == null) {
@@ -231,4 +231,5 @@ public class RfLinkColorDevice extends RfLinkAbstractDevice {
         }
         return messages;
     }
+
 }

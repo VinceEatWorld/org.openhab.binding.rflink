@@ -41,11 +41,18 @@ public interface RfLinkDevice {
     /**
      * Procedure generate RfLinkPacket[s] to send to the bridge
      *
-     * @return Collection of RfLinkPacket messages to be send over serial (OUTPUT type) or to handle as incoming events
-     *         (ECHO type). Several elements in case of composite command
+     * @return Collection of RfLinkPacket messages to be send over serial (OUTPUT type)
      */
 
-    public Collection<RfLinkPacket> buildPackets();
+    public Collection<RfLinkPacket> buildOutputPackets();
+
+    /**
+     * Procedure generate RfLinkPackets[s] to send to the handler as Incoming messages (notification service)
+     * 
+     * @return Collection of RfLinkPacket[s] to handle as incoming events
+     *         (ECHO type). Several elements in case of composite command
+     */
+    public Collection<RfLinkPacket> buildEchoPackets();
 
     /**
      * Procedure to get device unique Identifier
@@ -93,7 +100,7 @@ public interface RfLinkDevice {
 
     /**
      * Initializes Device from reception message
-     * 
+     *
      * @param config  TODO
      * @param message the RfLink message received from the bridge
      *

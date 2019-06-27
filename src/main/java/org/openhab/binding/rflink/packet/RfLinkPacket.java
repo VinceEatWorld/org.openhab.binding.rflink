@@ -18,8 +18,6 @@ public class RfLinkPacket {
     private RfLinkPacketType type;
     private String packet;
 
-    public static String PING = "10;PING;";
-
     public RfLinkPacket(RfLinkPacketType type, String packet) {
         super();
         this.type = type;

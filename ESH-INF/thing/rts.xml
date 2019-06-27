@@ -24,6 +24,11 @@
 				<label>Device Id</label>
 				<description>Must contain the Protocol + Address + Index (using '-' as separator). For instance : RTS-123ABC-0 (According to the RFLink protocol, Index is not used for now and '0' should be used)</description>
 			</parameter>
+			
+            <parameter name="linkedAddressId" type="text" required="false">
+                <label>Linked Address Id</label>
+                <description>Reference Address Id to project the incoming message (blank by default)</description>
+            </parameter>
 
 			<parameter name="isCommandReversed" type="boolean" required="false">
 				<label>Reverse Command</label>

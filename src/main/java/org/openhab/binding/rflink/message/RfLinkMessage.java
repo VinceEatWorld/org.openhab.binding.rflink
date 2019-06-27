@@ -102,10 +102,15 @@ public class RfLinkMessage {
     }
 
     public String getDeviceKey() {
-        String deviceIdKey = protocol + ID_DELIMITER + deviceId;
-        if (deviceSubId != null) {
-            deviceIdKey += ID_DELIMITER + deviceSubId;
+        String deviceIdKey = getBaseDeviceKey();
+        if (getDeviceSubId() != null) {
+            deviceIdKey += ID_DELIMITER + getDeviceSubId();
         }
+        return deviceIdKey;
+    }
+
+    public String getBaseDeviceKey() {
+        String deviceIdKey = getProtocol() + ID_DELIMITER + getDeviceId();
         return deviceIdKey;
     }
 
