@@ -41,7 +41,7 @@ public abstract class RfLinkAbstractDevice implements RfLinkDevice {
     public void initializeFromMessage(RfLinkDeviceConfiguration config, RfLinkMessage message) {
         setConfig(config);
         this.message = message;
-        if (getConfig() != null && getConfig().hasLinkedAddressId()) {
+        if (getConfig() != null && getConfig().hasEcho()) {
             // must "echo" the input command to the linked DeviceId
         }
     }
@@ -86,28 +86,19 @@ public abstract class RfLinkAbstractDevice implements RfLinkDevice {
 
     @Override
     public Collection<RfLinkPacket> buildEchoPackets() {
-        if (config.hasLinkedAddressId()) {
+        RfLinkPacket packet = null;
+        if (config.hasEcho()) {
             if (getMessage() != null) {
-                String echoMessage = getMessage().getRawMessage();
-                if (echoMessage != null) {
-                    String sourceAddressId = "ID=" + getMessage().getDeviceId();
-                    String targetAddressId = "ID=" + config.linkedAddressId;
-                    if (echoMessage.contains(sourceAddressId)) {
-                        // take the input message and replace the initial AddressId by the linked addressId
-                        echoMessage = echoMessage.replace(sourceAddressId, targetAddressId);
-                        RfLinkPacket packet = new RfLinkPacket(RfLinkPacketType.ECHO, echoMessage);
-                        return Collections.singletonList(packet);
-                    } else {
-                        // original AddressId not found in the input Message
-                    }
-                } else {
-                    // no initial raw message : unable to build echo message
-                }
+                packet = getMessage().buildEchoPacket(config.echoPattern);
             } else {
                 // no initial message (why are we here ?!?)
             }
         }
+        if (packet != null) {
+            return Collections.singletonList(packet);
+        }
         return Collections.emptyList();
+
     }
 
     // to override in subClasses if needed

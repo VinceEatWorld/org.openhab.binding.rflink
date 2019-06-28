@@ -65,7 +65,7 @@ public class RfLinkMessage {
 
     public RfLinkMessage(RfLinkPacket packet) {
         rawMessage = packet.getPacket();
-        final String[] elements = packet.getPacket().split(FIELDS_DELIMITER);
+        final String[] elements = packet.getPacket().split(FIELDS_DELIMITER, 4);
         final int size = elements.length;
         // Every message should have at least 5 parts
         // Example : 20;31;Mebus;ID=c201;TEMP=00cf;
@@ -77,17 +77,22 @@ public class RfLinkMessage {
                 seqNbr = (byte) Integer.parseInt(elements[1], 16);
                 protocol = RfLinkDataParser.cleanString(elements[2]);
                 // build the key>value map
-                if (size >= 4) {
-                    for (int i = 3; i < size; i++) {
-                        String[] keyValue = elements[i].split(VALUE_DELIMITER, 2);
-                        if (keyValue.length > 1) {
-                            // Raw values are stored, and will be decoded by sub implementations
-                            attributes.put(keyValue[0], keyValue[1]);
-                        }
-                    }
+                if (size == 4) {
+                    extractAttributes(attributes, elements[3]);
                 }
                 deviceId = attributes.get("ID");
                 deviceSubId = attributes.get("SWITCH");
+            }
+        }
+    }
+
+    public static void extractAttributes(Map<String, String> attributesMap, String attributesAsString) {
+        String[] elements = attributesAsString.split(FIELDS_DELIMITER);
+        for (String element : elements) {
+            String[] keyValue = element.split(VALUE_DELIMITER, 2);
+            if (keyValue.length > 1) {
+                // Raw values are stored, and will be decoded by sub implementations
+                attributesMap.put(keyValue[0], keyValue[1]);
             }
         }
     }
@@ -173,6 +178,23 @@ public class RfLinkMessage {
 
     private void appendToMessage(StringBuilder message, String element) {
         message.append(element).append(FIELDS_DELIMITER);
+    }
+
+    public RfLinkPacket buildEchoPacket(String echoPattern) {
+        if (getRawMessage() != null) {
+            String echoPacket = getRawMessage();
+            Map<String, String> overridenAttributes = new HashMap<>();
+            RfLinkMessage.extractAttributes(overridenAttributes, echoPattern);
+            for (String overridenAttributeKey : overridenAttributes.keySet()) {
+                String sourceAttribute = overridenAttributeKey + "=" + getAttributes().get(overridenAttributeKey);
+                String targetAttribute = overridenAttributeKey + "=" + overridenAttributes.get(overridenAttributeKey);
+                echoPacket = echoPacket.replace(sourceAttribute, targetAttribute);
+            }
+            return new RfLinkPacket(RfLinkPacketType.ECHO, echoPacket);
+        } else {
+            // no initial raw message : unable to build echo message
+        }
+        return null;
     }
 
 }

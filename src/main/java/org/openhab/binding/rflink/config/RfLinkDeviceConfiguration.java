@@ -19,8 +19,8 @@ public class RfLinkDeviceConfiguration {
     // Device Id
     public String deviceId;
 
-    // Linked Adress Id
-    public String linkedAddressId = null;
+    // Pattern to echo the input command
+    public String echoPattern = null;
 
     // Number of times to repeat a message
     public int repeats = 1;
@@ -37,8 +37,8 @@ public class RfLinkDeviceConfiguration {
                 + (shutterDuration > 0 ? "timing=" + shutterDuration + "s" : "");
     }
 
-    public boolean hasLinkedAddressId() {
-        return linkedAddressId != null && !linkedAddressId.trim().isEmpty();
+    public boolean hasEcho() {
+        return echoPattern != null && !echoPattern.trim().isEmpty();
     }
 
 }
