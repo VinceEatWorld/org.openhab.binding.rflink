@@ -190,7 +190,9 @@ public class RfLinkMessage {
                 String targetAttribute = overridenAttributeKey + "=" + overridenAttributes.get(overridenAttributeKey);
                 echoPacket = echoPacket.replace(sourceAttribute, targetAttribute);
             }
-            return new RfLinkPacket(RfLinkPacketType.ECHO, echoPacket);
+            if (!getRawMessage().equalsIgnoreCase(echoPacket)) {
+                return new RfLinkPacket(RfLinkPacketType.ECHO, echoPacket);
+            }
         } else {
             // no initial raw message : unable to build echo message
         }
