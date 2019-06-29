@@ -13,9 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -29,12 +27,10 @@ import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.openhab.binding.rflink.config.RfLinkBridgeConfiguration;
 import org.openhab.binding.rflink.connector.RfLinkConnectorInterface;
-import org.openhab.binding.rflink.connector.RfLinkEventListener;
 import org.openhab.binding.rflink.connector.RfLinkSerialConnector;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.internal.DeviceMessageListener;
 import org.openhab.binding.rflink.internal.discovery.RfLinkDeviceDiscoveryService;
-import org.openhab.binding.rflink.message.RfLinkMessage;
 import org.openhab.binding.rflink.packet.RfLinkPacket;
 import org.openhab.binding.rflink.packet.RfLinkPacketType;
 import org.slf4j.Logger;
@@ -54,8 +50,7 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
 
     private Logger logger = LoggerFactory.getLogger(RfLinkBridgeHandler.class);
 
-    RfLinkConnectorInterface connector = null;
-    private MessageListener eventListener = new MessageListener();
+    private RfLinkConnectorInterface connector = null;
 
     private RfLinkDeviceDiscoveryService discoveryService = null;
     private List<DeviceMessageListener> deviceStatusListeners = new CopyOnWriteArrayList<>();
@@ -63,30 +58,8 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
     private RfLinkBridgeConfiguration configuration = null;
     private ScheduledFuture<?> connectorTask = null;
     private ScheduledFuture<?> keepAliveTask = null;
-
-    private class TransmitQueue {
-        private Queue<Collection<RfLinkPacket>> queue = new LinkedBlockingQueue<Collection<RfLinkPacket>>();
-
-        public synchronized void enqueue(Collection<RfLinkPacket> outputPackets) throws IOException {
-            boolean wasEmpty = queue.isEmpty();
-            if (queue.offer(outputPackets)) {
-                if (wasEmpty) {
-                    send();
-                }
-            } else {
-                logger.error("Transmit queue overflow. Lost message: {}", outputPackets);
-            }
-        }
-
-        public synchronized void send() throws IOException {
-            while (!queue.isEmpty()) {
-                Collection<RfLinkPacket> packets = queue.poll();
-                connector.sendMessages(packets);
-            }
-        }
-    }
-
-    private TransmitQueue transmitQueue = new TransmitQueue();
+    private RfLinkBridgeTxQueue transmitQueue = new RfLinkBridgeTxQueue(this);
+    private RfLinkBridgeRxListener eventListener = new RfLinkBridgeRxListener(this);
 
     public RfLinkBridgeHandler(Bridge br) {
         super(br);
@@ -225,53 +198,6 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
         }
     }
 
-    private class MessageListener implements RfLinkEventListener {
-
-        @Override
-        public synchronized void packetReceived(RfLinkPacket rfLinkPacket) {
-            RfLinkMessage message = new RfLinkMessage(rfLinkPacket);
-            if (isDebugLogMessage(message)) {
-                // ignore Debug & OK response messages...
-            } else {
-                boolean hasBeenProcessed = false;
-                // 1 - HANDLE DEVICE LISTENERS
-                for (DeviceMessageListener deviceStatusListener : deviceStatusListeners) {
-                    try {
-                        hasBeenProcessed = hasBeenProcessed
-                                || deviceStatusListener.handleIncomingMessage(getThing().getUID(), message);
-                    } catch (Exception e) {
-                        logger.error(
-                                "An exception occurred while calling the DeviceStatusListener for message " + message,
-                                e);
-                    }
-                }
-                // 2 - HANDLE DISCOVERY
-                if (!hasBeenProcessed) {
-                    // current message is "unknown" (i.e. not handled by any existing Handler)
-                    if (discoveryService != null && !getConfiguration().disableDiscovery) {
-                        try {
-                            discoveryService.discoverThing(getThing().getUID(), message);
-                        } catch (Exception e) {
-                            logger.error("An exception occurred while registring message to the DiscoveryService : "
-                                    + message, e);
-                        }
-                    }
-                }
-            }
-            updateStatus(ThingStatus.ONLINE);
-        }
-
-        @Override
-        public void errorOccured(String error) {
-            logger.error("Error occured: {}", error);
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR);
-        }
-
-        private boolean isDebugLogMessage(RfLinkMessage message) {
-            return "Debug".equals(message.getProtocol()) || "OK".equals(message.getProtocol());
-        }
-    }
-
     public boolean registerDeviceStatusListener(DeviceMessageListener deviceStatusListener) {
         if (deviceStatusListener == null) {
             throw new IllegalArgumentException("It's not allowed to pass a null deviceStatusListener.");
@@ -291,8 +217,26 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
         return configuration;
     }
 
+    public RfLinkDeviceDiscoveryService getDiscoveryService() {
+        return discoveryService;
+    }
+
     public void setDiscoveryService(RfLinkDeviceDiscoveryService discoveryService) {
         this.discoveryService = discoveryService;
+    }
+
+    public RfLinkConnectorInterface getConnector() {
+        return connector;
+    }
+
+    public List<DeviceMessageListener> getDeviceStatusListeners() {
+        return deviceStatusListeners;
+    }
+
+    @Override
+    public void updateStatus(ThingStatus status, ThingStatusDetail statusDetail) {
+        // needs to be visible for Rx & Tx to update the status
+        super.updateStatus(status, statusDetail);
     }
 
 }
