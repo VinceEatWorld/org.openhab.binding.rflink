@@ -16,8 +16,8 @@ import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
-import org.openhab.binding.rflink.device.RfLinkDevice;
-import org.openhab.binding.rflink.device.RfLinkDeviceFactory;
+import org.openhab.binding.rflink.event.RfLinkEvent;
+import org.openhab.binding.rflink.event.RfLinkDeviceFactory;
 import org.openhab.binding.rflink.handler.RfLinkBridgeHandler;
 import org.openhab.binding.rflink.message.RfLinkMessage;
 import org.slf4j.Logger;
@@ -63,7 +63,7 @@ public class RfLinkDeviceDiscoveryService extends AbstractDiscoveryService {
     }
 
     public void discoverThing(ThingUID bridge, RfLinkMessage message) throws Exception {
-        RfLinkDevice device = RfLinkDeviceFactory.createDeviceFromMessage(message);
+        RfLinkEvent device = RfLinkDeviceFactory.createDeviceFromMessage(message);
         device.initializeFromMessage(null, message);
         String id = device.getKey();
         ThingTypeUID uid = device.getThingType();

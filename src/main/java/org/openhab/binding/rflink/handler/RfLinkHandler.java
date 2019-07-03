@@ -26,9 +26,9 @@ import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
-import org.openhab.binding.rflink.device.RfLinkDevice;
-import org.openhab.binding.rflink.device.RfLinkDeviceFactory;
-import org.openhab.binding.rflink.device.RfLinkRtsDevice;
+import org.openhab.binding.rflink.event.RfLinkEvent;
+import org.openhab.binding.rflink.event.RfLinkDeviceFactory;
+import org.openhab.binding.rflink.event.RfLinkRtsEvent;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
 import org.openhab.binding.rflink.internal.DeviceMessageListener;
@@ -87,7 +87,7 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
                 // Not supported
             } else {
                 try {
-                    RfLinkDevice device = RfLinkDeviceFactory.createDeviceFromType(getThing().getThingTypeUID());
+                    RfLinkEvent device = RfLinkDeviceFactory.createDeviceFromType(getThing().getThingTypeUID());
                     device.initializeFromChannel(config, channelUID, command);
                     processEchoPackets(device);
                     if (config.isRtsPositionTrackerEnabled()) {
@@ -110,7 +110,7 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
     public boolean handleIncomingMessage(ThingUID bridge, RfLinkMessage incomingMessage) throws Exception {
         String id = incomingMessage.getDeviceKey();
         if (config != null && id.equalsIgnoreCase(config.deviceId)) {
-            RfLinkDevice device = RfLinkDeviceFactory.createDeviceFromMessage(incomingMessage);
+            RfLinkEvent device = RfLinkDeviceFactory.createDeviceFromMessage(incomingMessage);
             device.initializeFromMessage(config, incomingMessage);
             processEchoPackets(device);
             updateStatus(ThingStatus.ONLINE);
@@ -124,7 +124,7 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
         return false;
     }
 
-    private void processOutputPackets(RfLinkDevice device) throws RfLinkException {
+    private void processOutputPackets(RfLinkEvent device) throws RfLinkException {
         int repeats = Math.min(Math.max(getConfiguration().repeats, 1), 20);
         Collection<RfLinkPacket> packets = device.buildOutputPackets();
         for (int i = 0; i < repeats; i++) {
@@ -132,7 +132,7 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
         }
     }
 
-    private void processEchoPackets(RfLinkDevice device) throws RfLinkException {
+    private void processEchoPackets(RfLinkEvent device) throws RfLinkException {
         Collection<RfLinkPacket> echoPackets = device.buildEchoPackets();
         bridgeHandler.processPackets(echoPackets);
     }
@@ -192,7 +192,7 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
         super.dispose();
     }
 
-    protected void updateThingStates(RfLinkDevice device) {
+    protected void updateThingStates(RfLinkEvent device) {
         Map<String, State> map = device.getStates();
         for (String channel : map.keySet()) {
             logger.debug("Update channel: {}, state: {}", channel, map.get(channel));
@@ -200,23 +200,23 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
         }
     }
 
-    private boolean isRtsPositionTrackerEnabled(RfLinkDevice device) {
-        if (device instanceof RfLinkRtsDevice && getConfiguration().isRtsPositionTrackerEnabled()) {
+    private boolean isRtsPositionTrackerEnabled(RfLinkEvent device) {
+        if (device instanceof RfLinkRtsEvent && getConfiguration().isRtsPositionTrackerEnabled()) {
             return true;
         }
         return false;
     }
 
-    private void handleRtsPositionTracker(RfLinkHandler handler, RfLinkDevice device) {
+    private void handleRtsPositionTracker(RfLinkHandler handler, RfLinkEvent device) {
         try {
             RfLinkRtsPositionHandler shutterInfos = getShutterInfos(handler, device);
-            shutterInfos.handleCommand((RfLinkRtsDevice) device);
+            shutterInfos.handleCommand((RfLinkRtsEvent) device);
         } catch (Exception ex) {
             logger.error("OOOPS, processing device=" + device, ex);
         }
     }
 
-    private RfLinkRtsPositionHandler getShutterInfos(RfLinkHandler handler, RfLinkDevice device) {
+    private RfLinkRtsPositionHandler getShutterInfos(RfLinkHandler handler, RfLinkEvent device) {
         RfLinkRtsPositionHandler shutterInfos = shutterInfosMap.get(device.getKey());
         if (shutterInfos == null) {
             synchronized (shutterInfosMap) {

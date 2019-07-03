@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.device;
+package org.openhab.binding.rflink.event;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,7 +27,7 @@ import org.openhab.binding.rflink.message.RfLinkMessage;
  *
  * @author Cyril Cauchois - Initial contribution
  */
-public class RfLinkWindDevice extends RfLinkAbstractDevice {
+public class RfLinkWindEvent extends RfLinkAbstractEvent {
 
     private static final String KEY_WIND_SPEED = "WINSP";
     private static final String KEY_AVERAGE_WIND_SPEED = "AWINSP";
@@ -45,7 +45,7 @@ public class RfLinkWindDevice extends RfLinkAbstractDevice {
     public int windGust = 0;
     public double windChill = 0;
 
-    public RfLinkWindDevice() {
+    public RfLinkWindEvent() {
 
     }
 

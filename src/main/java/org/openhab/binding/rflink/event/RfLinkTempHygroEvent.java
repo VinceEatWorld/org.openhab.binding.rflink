@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.device;
+package org.openhab.binding.rflink.event;
 
 import java.util.Arrays;
 import java.util.Calendar;
@@ -34,7 +34,7 @@ import org.openhab.binding.rflink.message.RfLinkMessage;
  * @author Marek Majchrowski - Initial contribution
  */
 
-public class RfLinkTempHygroDevice extends RfLinkAbstractDevice {
+public class RfLinkTempHygroEvent extends RfLinkAbstractEvent {
     private static final String KEY_TEMPERATURE = "TEMP";
     private static final String KEY_HUMIDITY = "HUM";
     private static final String KEY_HUMIDITY_STATUS = "HSTATUS";
@@ -92,7 +92,7 @@ public class RfLinkTempHygroDevice extends RfLinkAbstractDevice {
         }
     }
 
-    public RfLinkTempHygroDevice() {
+    public RfLinkTempHygroEvent() {
     }
 
     @Override

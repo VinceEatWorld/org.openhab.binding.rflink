@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.device;
+package org.openhab.binding.rflink.event;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,19 +41,19 @@ import org.slf4j.LoggerFactory;
  * @author Arjan Mels - Simplified by using system OnOffType and OpenClosedType
  * @author John Jore - Simplification breaks "Contacts" as RfLink outputs OFF/ON, not OPEN/CLOSED. Reverted
  */
-public class RfLinkSwitchDevice extends RfLinkAbstractDevice {
+public class RfLinkSwitchEvent extends RfLinkAbstractEvent {
     private static final String KEY_SWITCH = "SWITCH";
     private static final String KEY_CMD = "CMD";
     private static final String VALUE_DIMMING_PREFIX = "SET_LEVEL";
 
     private static final Collection<String> KEYS = Arrays.asList(KEY_SWITCH, KEY_CMD);
-    private static Logger logger = LoggerFactory.getLogger(RfLinkSwitchDevice.class);
+    private static Logger logger = LoggerFactory.getLogger(RfLinkSwitchEvent.class);
 
     public Type command = OnOffType.OFF;
     public Type contact = OpenClosedType.CLOSED;
     public Type dimming = null;
 
-    public RfLinkSwitchDevice() {
+    public RfLinkSwitchEvent() {
     }
 
     @Override

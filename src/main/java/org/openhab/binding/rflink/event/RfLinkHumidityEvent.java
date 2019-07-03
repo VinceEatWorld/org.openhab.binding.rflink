@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.device;
+package org.openhab.binding.rflink.event;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,12 +24,12 @@ import org.openhab.binding.rflink.message.RfLinkMessage;
  * @author Marvyn Zalewski - Initial contribution
  */
 
-public class RfLinkHumidityDevice extends RfLinkAbstractDevice {
+public class RfLinkHumidityEvent extends RfLinkAbstractEvent {
     private static final String KEY_HUMIDITY = "HUM";
 
     public double humidity = 0;
 
-    public RfLinkHumidityDevice() {
+    public RfLinkHumidityEvent() {
     }
 
     @Override

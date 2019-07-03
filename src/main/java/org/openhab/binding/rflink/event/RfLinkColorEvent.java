@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.device;
+package org.openhab.binding.rflink.event;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,8 +39,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author Arjan Mels - Initial contribution
  */
-public class RfLinkColorDevice extends RfLinkAbstractDevice {
-    private Logger logger = LoggerFactory.getLogger(RfLinkColorDevice.class);
+public class RfLinkColorEvent extends RfLinkAbstractEvent {
+    private Logger logger = LoggerFactory.getLogger(RfLinkColorEvent.class);
 
     private static final String KEY_RGBW = "RGBW";
     private static final String KEY_CMD = "CMD";
@@ -54,7 +54,7 @@ public class RfLinkColorDevice extends RfLinkAbstractDevice {
 
     private static HashMap<String, HSBType> currentState = new HashMap<>();
 
-    public RfLinkColorDevice() {
+    public RfLinkColorEvent() {
     }
 
     @Override

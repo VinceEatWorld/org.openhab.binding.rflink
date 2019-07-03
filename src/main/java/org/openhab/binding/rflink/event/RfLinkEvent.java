@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.device;
+package org.openhab.binding.rflink.event;
 
 import java.util.Collection;
 import java.util.Map;
@@ -29,7 +29,7 @@ import org.openhab.binding.rflink.packet.RfLinkPacket;
  * @author cartemere - refactoring + define Predicate
  * @author cartemere - use Config in initialize
  */
-public interface RfLinkDevice {
+public interface RfLinkEvent {
 
     /**
      * Lambda function to check the eligibility of an incoming RfLinkMessage.

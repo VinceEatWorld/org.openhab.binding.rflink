@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.device;
+package org.openhab.binding.rflink.event;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
@@ -32,28 +32,28 @@ public class RfLinkDeviceFactory {
 
     private static Logger logger = LoggerFactory.getLogger(RfLinkDeviceFactory.class);
 
-    private static LinkedHashMap<Predicate<RfLinkMessage>, Class<? extends RfLinkDevice>> MESSAGE_TO_DEVICE = new LinkedHashMap<>();
-    private static HashMap<ThingTypeUID, Class<? extends RfLinkDevice>> THINGTYPE_TO_CLASS = new HashMap<>();
+    private static LinkedHashMap<Predicate<RfLinkMessage>, Class<? extends RfLinkEvent>> MESSAGE_TO_DEVICE = new LinkedHashMap<>();
+    private static HashMap<ThingTypeUID, Class<? extends RfLinkEvent>> THINGTYPE_TO_CLASS = new HashMap<>();
 
     /**
      * Mapping of the various message classes.
      * Note that the order is important: first matching class will be used
      */
     static {
-        addMappingOfClass(RfLinkEnergyDevice.class);
-        addMappingOfClass(RfLinkWindDevice.class);
-        addMappingOfClass(RfLinkRainDevice.class);
-        addMappingOfClass(RfLinkColorDevice.class);
+        addMappingOfClass(RfLinkEnergyEvent.class);
+        addMappingOfClass(RfLinkWindEvent.class);
+        addMappingOfClass(RfLinkRainEvent.class);
+        addMappingOfClass(RfLinkColorEvent.class);
         // addMappingOfClass(RfLinkTemperatureDevice.class);
-        addMappingOfClass(RfLinkRtsDevice.class);
+        addMappingOfClass(RfLinkRtsEvent.class);
         // addMappingOfClass(RfLinkHumidityDevice.class);
-        addMappingOfClass(RfLinkTempHygroDevice.class);
-        addMappingOfClass(RfLinkSwitchDevice.class); // Switch class last as it is most generic
+        addMappingOfClass(RfLinkTempHygroEvent.class);
+        addMappingOfClass(RfLinkSwitchEvent.class); // Switch class last as it is most generic
     }
 
-    private static void addMappingOfClass(Class<? extends RfLinkDevice> _class) {
+    private static void addMappingOfClass(Class<? extends RfLinkEvent> _class) {
         try {
-            RfLinkDevice m = _class.newInstance();
+            RfLinkEvent m = _class.newInstance();
             MESSAGE_TO_DEVICE.put(m.eligibleMessageFunction(), _class);
             THINGTYPE_TO_CLASS.put(m.getThingType(), _class);
         } catch (InstantiationException | IllegalAccessException e) {
@@ -61,15 +61,15 @@ public class RfLinkDeviceFactory {
         }
     }
 
-    public static RfLinkDevice createDeviceFromMessage(RfLinkMessage message)
+    public static RfLinkEvent createDeviceFromMessage(RfLinkMessage message)
             throws RfLinkException, RfLinkNotImpException {
-        for (Map.Entry<Predicate<RfLinkMessage>, Class<? extends RfLinkDevice>> messageToDeviceEntry : MESSAGE_TO_DEVICE
+        for (Map.Entry<Predicate<RfLinkMessage>, Class<? extends RfLinkEvent>> messageToDeviceEntry : MESSAGE_TO_DEVICE
                 .entrySet()) {
             if (messageToDeviceEntry.getKey().test(message)) {
-                Class<? extends RfLinkDevice> cl = messageToDeviceEntry.getValue();
+                Class<? extends RfLinkEvent> cl = messageToDeviceEntry.getValue();
                 try {
                     Constructor<?> c = cl.getConstructor();
-                    RfLinkDevice device = (RfLinkDevice) c.newInstance();
+                    RfLinkEvent device = (RfLinkEvent) c.newInstance();
                     return device;
                 } catch (Exception e) {
                     logger.error("Exception: {}", e);
@@ -80,12 +80,12 @@ public class RfLinkDeviceFactory {
         throw new RfLinkNotImpException("No message implementation found for packet " + message.rawMessage);
     }
 
-    public static RfLinkDevice createDeviceFromType(ThingTypeUID thingType) throws RfLinkException {
+    public static RfLinkEvent createDeviceFromType(ThingTypeUID thingType) throws RfLinkException {
         if (THINGTYPE_TO_CLASS.containsKey(thingType)) {
             try {
                 Class<?> cl = THINGTYPE_TO_CLASS.get(thingType);
                 Constructor<?> c = cl.getConstructor();
-                return (RfLinkDevice) c.newInstance();
+                return (RfLinkEvent) c.newInstance();
             } catch (Exception e) {
                 throw new RfLinkException("Unable to instanciate message object", e);
             }

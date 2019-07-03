@@ -30,7 +30,7 @@ Export-Package:
  org.openhab.binding.rflink;uses:="org.eclipse.smarthome.core.thing",
  org.openhab.binding.rflink.config;x-internal:=true,
  org.openhab.binding.rflink.connector;x-internal:=true,
- org.openhab.binding.rflink.device;x-internal:=true,
+ org.openhab.binding.rflink.event;x-internal:=true,
  org.openhab.binding.rflink.exceptions;x-internal:=true,
  org.openhab.binding.rflink.handler;
   uses:="org.eclipse.smarthome.core.thing,
@@ -40,5 +40,5 @@ Export-Package:
    org.eclipse.smarthome.core.types,
    org.openhab.binding.rflink.connector",
  org.openhab.binding.rflink.message;x-internal:=true,
- org.openhab.binding.rflink.type;x-internal:=true,
- org.openhab.binding.rflink.packet;x-internal:=true
+ org.openhab.binding.rflink.packet;x-internal:=true,
+ org.openhab.binding.rflink.type;x-internal:=true

@@ -15,7 +15,7 @@ import java.util.Map;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
-import org.openhab.binding.rflink.device.RfLinkDataParser;
+import org.openhab.binding.rflink.event.RfLinkDataParser;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
 import org.openhab.binding.rflink.packet.RfLinkPacket;

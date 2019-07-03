@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.device;
+package org.openhab.binding.rflink.event;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,7 +27,7 @@ import org.openhab.binding.rflink.message.RfLinkMessage;
  *
  * @author Cyril Cauchois - Initial contribution
  */
-public class RfLinkRainDevice extends RfLinkAbstractDevice {
+public class RfLinkRainEvent extends RfLinkAbstractEvent {
 
     private static final String KEY_RAIN = "RAIN";
     private static final String KEY_RAIN_RATE = "RAINRATE";
@@ -37,7 +37,7 @@ public class RfLinkRainDevice extends RfLinkAbstractDevice {
     public double rain = 0;
     public double rainRate = 0;
 
-    public RfLinkRainDevice() {
+    public RfLinkRainEvent() {
 
     }
 

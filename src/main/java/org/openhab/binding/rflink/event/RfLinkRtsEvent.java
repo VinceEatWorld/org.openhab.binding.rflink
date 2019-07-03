@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.rflink.device;
+package org.openhab.binding.rflink.event;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,14 +34,14 @@ import org.openhab.binding.rflink.type.RfLinkTypeUtils;
  * @author Arjan Mels - Added reception and debugged sending
  * @author cartemere - support RollerShutter
  */
-public class RfLinkRtsDevice extends RfLinkAbstractDevice {
+public class RfLinkRtsEvent extends RfLinkAbstractEvent {
 
     public static String PROTOCOL_RTS = "RTS";
     private static final String KEY_CMD = "CMD";
     public Command command = null;
     public State shutter = null;
 
-    public RfLinkRtsDevice() {
+    public RfLinkRtsEvent() {
     }
 
     @Override

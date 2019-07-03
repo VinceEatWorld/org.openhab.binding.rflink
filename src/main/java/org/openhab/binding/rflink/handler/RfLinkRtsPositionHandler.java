@@ -18,9 +18,9 @@ import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
 import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
-import org.openhab.binding.rflink.device.RfLinkDevice;
-import org.openhab.binding.rflink.device.RfLinkDeviceFactory;
-import org.openhab.binding.rflink.device.RfLinkRtsDevice;
+import org.openhab.binding.rflink.event.RfLinkEvent;
+import org.openhab.binding.rflink.event.RfLinkDeviceFactory;
+import org.openhab.binding.rflink.event.RfLinkRtsEvent;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
 import org.openhab.binding.rflink.packet.RfLinkPacketType;
@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * {@link RfLinkRtsPositionHandler} is a <b>Somfy RTS RollerShutters <u>POSITION</u> tracker</b>.
  * <p/>
  * This handler is triggered from the {@link RfLinkHandler}, when a {@link Command} is sent to an eligible
- * {@link RfLinkRtsDevice} (see {@link RfLinkDeviceConfiguration} configuration for more details).
+ * {@link RfLinkRtsEvent} (see {@link RfLinkDeviceConfiguration} configuration for more details).
  * <p/>
  * <b>THE CHALLENGE :</b> Somfy RollerShutters are "passive" things. They receive order from remote(s), but never
  * transmit status/position. So it is a bit difficult to track them.
@@ -75,10 +75,10 @@ public class RfLinkRtsPositionHandler {
     /**
      * main entry point for the RtsPositionHandler
      *
-     * @param rtsDevice the input {@link RfLinkRtsDevice} event to handle (must be initialized, with enclosed
+     * @param rtsDevice the input {@link RfLinkRtsEvent} event to handle (must be initialized, with enclosed
      *                      {@link RfLinkRtsMessage} and {@link Command}
      */
-    public synchronized void handleCommand(RfLinkRtsDevice rtsDevice) {
+    public synchronized void handleCommand(RfLinkRtsEvent rtsDevice) {
         // STEP 0 : stop all scheduled task on previous command (if any)
         stopSchedulerStatus(true);
         stopSchedulerTarget(true);
@@ -97,7 +97,7 @@ public class RfLinkRtsPositionHandler {
         }
     }
 
-    private void handleCurrentCommand(RfLinkRtsDevice rtsDevice) {
+    private void handleCurrentCommand(RfLinkRtsEvent rtsDevice) {
         timestampOnLastEvent = System.currentTimeMillis();
         Command command = rtsDevice.getCommand();
         rtsDevice.getMessage().getType();
@@ -157,7 +157,7 @@ public class RfLinkRtsPositionHandler {
         }, statusRefreshRate, statusRefreshRate, TimeUnit.MILLISECONDS);
     }
 
-    private void schedulePositionTarget(RfLinkDevice device, long delayTillCommandEnd, Command sendCommandAtTarget) {
+    private void schedulePositionTarget(RfLinkEvent device, long delayTillCommandEnd, Command sendCommandAtTarget) {
         if (isOutputDevice(device)) {
             // update position at target position
             logger.debug(
@@ -183,7 +183,7 @@ public class RfLinkRtsPositionHandler {
         if (command != null) {
             commandProcessedEffective = command;
             try {
-                RfLinkDevice device = RfLinkDeviceFactory.createDeviceFromType(handler.getThing().getThingTypeUID());
+                RfLinkEvent device = RfLinkDeviceFactory.createDeviceFromType(handler.getThing().getThingTypeUID());
                 device.initializeFromChannel(handler.getConfiguration(),
                         new ChannelUID(handler.getThing().getUID(), RfLinkBindingConstants.CHANNEL_SHUTTER), command);
                 sendDeviceCommand(device);
@@ -193,7 +193,7 @@ public class RfLinkRtsPositionHandler {
         }
     }
 
-    private void sendDeviceCommand(RfLinkDevice device) {
+    private void sendDeviceCommand(RfLinkEvent device) {
         if (isOutputDevice(device)) {
             try {
                 handler.getBridgeHandler().processPackets(device.buildOutputPackets());
@@ -203,7 +203,7 @@ public class RfLinkRtsPositionHandler {
         }
     }
 
-    private boolean isOutputDevice(RfLinkDevice device) {
+    private boolean isOutputDevice(RfLinkEvent device) {
         return RfLinkPacketType.OUTPUT.equals(device.getMessage().getType());
     }
 
