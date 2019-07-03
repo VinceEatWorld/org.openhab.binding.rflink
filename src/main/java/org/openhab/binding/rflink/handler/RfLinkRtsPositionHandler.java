@@ -23,6 +23,7 @@ import org.openhab.binding.rflink.device.RfLinkDeviceFactory;
 import org.openhab.binding.rflink.device.RfLinkRtsDevice;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
+import org.openhab.binding.rflink.packet.RfLinkPacketType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,7 +100,8 @@ public class RfLinkRtsPositionHandler {
     private void handleCurrentCommand(RfLinkRtsDevice rtsDevice) {
         timestampOnLastEvent = System.currentTimeMillis();
         Command command = rtsDevice.getCommand();
-        logger.info("> received Command=" + command + " for device " + rtsDevice);
+        rtsDevice.getMessage().getType();
+        logger.info("> received Intent=" + command + " for device " + rtsDevice);
         if (StopMoveType.STOP.equals(command)) {
             commandProcessedEffective = command;
             sendDeviceCommand(rtsDevice);
@@ -112,7 +114,7 @@ public class RfLinkRtsPositionHandler {
             if (commandProcessedEffective instanceof UpDownType) {
                 long delayToTarget = computeDelayFromMoveValue(moveValue);
                 Command commandAtTarget = getCommandAtTargetPosition(targetPosition);
-                schedulePositionTarget(delayToTarget, commandAtTarget);
+                schedulePositionTarget(rtsDevice, delayToTarget, commandAtTarget);
             }
         } else if (command instanceof UpDownType) {
             commandProcessedEffective = command;
@@ -155,16 +157,19 @@ public class RfLinkRtsPositionHandler {
         }, statusRefreshRate, statusRefreshRate, TimeUnit.MILLISECONDS);
     }
 
-    private void schedulePositionTarget(long delayTillCommandEnd, Command sendCommandAtTarget) {
-        // update position at target position
-        logger.debug("SCHEDULE position TARGET at " + delayTillCommandEnd + "ms with command=" + sendCommandAtTarget);
-        schedulerTarget = handler.getScheduler().schedule(() -> {
-            logger.debug("SCHEDULE: Update final status on " + handler.getThing().getUID());
-            stopSchedulerTarget(false);
-            positionFrom = computeSnapshotPositionFromDelay();
-            updateShutterPositionState(positionFrom);
-            sendCommand(sendCommandAtTarget);
-        }, delayTillCommandEnd, TimeUnit.MILLISECONDS);
+    private void schedulePositionTarget(RfLinkDevice device, long delayTillCommandEnd, Command sendCommandAtTarget) {
+        if (isOutputDevice(device)) {
+            // update position at target position
+            logger.debug(
+                    "SCHEDULE position TARGET at " + delayTillCommandEnd + "ms with command=" + sendCommandAtTarget);
+            schedulerTarget = handler.getScheduler().schedule(() -> {
+                logger.debug("SCHEDULE: Update final status on " + handler.getThing().getUID());
+                stopSchedulerTarget(false);
+                positionFrom = computeSnapshotPositionFromDelay();
+                updateShutterPositionState(positionFrom);
+                sendCommand(sendCommandAtTarget);
+            }, delayTillCommandEnd, TimeUnit.MILLISECONDS);
+        }
     }
 
     private void updateShutterPositionState(PercentType position) {
@@ -189,11 +194,17 @@ public class RfLinkRtsPositionHandler {
     }
 
     private void sendDeviceCommand(RfLinkDevice device) {
-        try {
-            handler.getBridgeHandler().processPackets(device.buildOutputPackets());
-        } catch (RfLinkException e) {
-            logger.error("Could not send Device event " + device + " on bridge " + handler.getBridgeHandler(), e);
+        if (isOutputDevice(device)) {
+            try {
+                handler.getBridgeHandler().processPackets(device.buildOutputPackets());
+            } catch (RfLinkException e) {
+                logger.error("Could not send Device event " + device + " on bridge " + handler.getBridgeHandler(), e);
+            }
         }
+    }
+
+    private boolean isOutputDevice(RfLinkDevice device) {
+        return RfLinkPacketType.OUTPUT.equals(device.getMessage().getType());
     }
 
     private Command getDirectionCommandFromMove(int diff) {
@@ -260,6 +271,11 @@ public class RfLinkRtsPositionHandler {
             schedulerTarget.cancel(forceCancel);
             schedulerTarget = null;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "RfLinkRtsPositionHandler [" + handler + "]";
     }
 
 }

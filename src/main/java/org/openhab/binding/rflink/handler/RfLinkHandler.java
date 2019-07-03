@@ -90,7 +90,7 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
                     RfLinkDevice device = RfLinkDeviceFactory.createDeviceFromType(getThing().getThingTypeUID());
                     device.initializeFromChannel(config, channelUID, command);
                     processEchoPackets(device);
-                    if (isRtsPositionTrackerEnabled(device)) {
+                    if (config.isRtsPositionTrackerEnabled()) {
                         // need specific handling : the command is processed by the tracker
                         handleRtsPositionTracker(this, device);
                     } else {
@@ -114,7 +114,7 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
             device.initializeFromMessage(config, incomingMessage);
             processEchoPackets(device);
             updateStatus(ThingStatus.ONLINE);
-            if (isRtsPositionTrackerEnabled(device)) {
+            if (config.isRtsPositionTrackerEnabled()) {
                 handleRtsPositionTracker(this, device);
             } else {
                 updateThingStates(device);
@@ -201,7 +201,7 @@ public class RfLinkHandler extends BaseThingHandler implements DeviceMessageList
     }
 
     private boolean isRtsPositionTrackerEnabled(RfLinkDevice device) {
-        if (device instanceof RfLinkRtsDevice && getConfiguration().shutterDuration > 0) {
+        if (device instanceof RfLinkRtsDevice && getConfiguration().isRtsPositionTrackerEnabled()) {
             return true;
         }
         return false;
