@@ -41,4 +41,8 @@ public class RfLinkDeviceConfiguration {
         return echoPattern != null && !echoPattern.trim().isEmpty();
     }
 
+    public boolean isRtsPositionTrackerEnabled() {
+        return shutterDuration > 0;
+    }
+
 }

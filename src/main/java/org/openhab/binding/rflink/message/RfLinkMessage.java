@@ -45,6 +45,7 @@ public class RfLinkMessage {
     private static final String DEVICE_MASK_6 = "000000";
 
     public String rawMessage;
+    private RfLinkPacketType type;
     private byte seqNbr = 0;
     private String protocol; // protocol Name (RTS, X10, etc.)
     protected String deviceId; // device Identifier (Rolling code, etc.)
@@ -53,6 +54,7 @@ public class RfLinkMessage {
 
     public RfLinkMessage(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
             throws RfLinkNotImpException, RfLinkException {
+        type = RfLinkPacketType.OUTPUT;
         String[] elements = config.deviceId.split(ID_DELIMITER);
         if (elements.length > 1) {
             protocol = elements[0];
@@ -65,6 +67,7 @@ public class RfLinkMessage {
 
     public RfLinkMessage(RfLinkPacket packet) {
         rawMessage = packet.getPacket();
+        type = packet.getType();
         final String[] elements = packet.getPacket().split(FIELDS_DELIMITER, 4);
         final int size = elements.length;
         // Every message should have at least 5 parts
@@ -99,11 +102,15 @@ public class RfLinkMessage {
 
     @Override
     public String toString() {
-        return getDeviceKey();
+        return getType() + ":" + getDeviceKey();
     }
 
     public String getRawMessage() {
         return rawMessage;
+    }
+
+    public RfLinkPacketType getType() {
+        return type;
     }
 
     public String getDeviceKey() {

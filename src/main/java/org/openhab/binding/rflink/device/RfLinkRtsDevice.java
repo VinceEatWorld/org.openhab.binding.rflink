@@ -90,7 +90,7 @@ public class RfLinkRtsDevice extends RfLinkAbstractDevice {
             throws RfLinkNotImpException, RfLinkException {
         super.initializeFromChannel(config, channelUID, triggeredCommand);
         command = getCommandAction(channelUID.getId(), triggeredCommand);
-        if (!(config.shutterDuration > 0)) {
+        if (!(config.isRtsPositionTrackerEnabled())) {
             shutter = (State) RfLinkTypeUtils.getOnOffTypeFromType(command);
         }
     }

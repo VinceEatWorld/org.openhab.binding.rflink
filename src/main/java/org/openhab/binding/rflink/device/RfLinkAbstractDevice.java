@@ -71,6 +71,7 @@ public abstract class RfLinkAbstractDevice implements RfLinkDevice {
         return (message) -> false;
     }
 
+    @Override
     public RfLinkMessage getMessage() {
         return message;
     }

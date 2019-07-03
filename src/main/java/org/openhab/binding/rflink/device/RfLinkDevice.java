@@ -48,11 +48,17 @@ public interface RfLinkDevice {
 
     /**
      * Procedure generate RfLinkPackets[s] to send to the handler as Incoming messages (notification service)
-     * 
+     *
      * @return Collection of RfLinkPacket[s] to handle as incoming events
      *         (ECHO type). Several elements in case of composite command
      */
     public Collection<RfLinkPacket> buildEchoPackets();
+
+    /**
+     *
+     * @return the RfLinkMessage attached to the Device
+     */
+    public RfLinkMessage getMessage();
 
     /**
      * Procedure to get device unique Identifier
