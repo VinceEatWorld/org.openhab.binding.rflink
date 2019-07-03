@@ -69,7 +69,9 @@ public class RfLinkRtsDevice extends RfLinkAbstractDevice {
     public Map<String, State> getStates() {
         Map<String, State> map = new HashMap<>();
         if (shutter != null && !UnDefType.UNDEF.equals(shutter)) {
-            map.put(RfLinkBindingConstants.CHANNEL_SHUTTER, shutter);
+            if (!(getConfig().isRtsPositionTrackerEnabled())) {
+                map.put(RfLinkBindingConstants.CHANNEL_SHUTTER, shutter);
+            }
         }
         map.put(RfLinkBindingConstants.CHANNEL_COMMAND, command instanceof State ? (State) command : UnDefType.UNDEF);
         return map;
@@ -90,7 +92,7 @@ public class RfLinkRtsDevice extends RfLinkAbstractDevice {
             throws RfLinkNotImpException, RfLinkException {
         super.initializeFromChannel(config, channelUID, triggeredCommand);
         command = getCommandAction(channelUID.getId(), triggeredCommand);
-        if (!(config.isRtsPositionTrackerEnabled())) {
+        if (!(getConfig().isRtsPositionTrackerEnabled())) {
             shutter = (State) RfLinkTypeUtils.getOnOffTypeFromType(command);
         }
     }
