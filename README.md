@@ -245,7 +245,8 @@ Wet (3)
 
 | Channel ID  | Item Type    | Description  |
 |-------------|--------------|--------------|
-| rts         | Rollershutter| Command / Position |
+| command         | Switch | Command ON/OFF + Position OPEN/CLOSED (no intermediate position) |
+| shutter         | Rollershutter | Command UP/DOWN/STOP/Percent + Position Percent (Percent only available if shutter position tracking is enabled) |
 
 ### Color
 
@@ -338,7 +339,8 @@ On the Home Automation Software side :
 | Concept  | Binding class    |
 |-------------|--------------|
 | OpenHab Bridge | RfLinkBridgeHandler |
-| OpenHab Thing | RfLinkHandler + related RfLinkDevice |
+| OpenHab Thing | RfLinkHandler instance (one per Thing)
+| OpenHab Action | RfLinkDevice instance (one created for each action/event) |
 | Message (RAW) | RfLinkPacket |
 | Message (Decomposed) | RfLinkMessage |
 
