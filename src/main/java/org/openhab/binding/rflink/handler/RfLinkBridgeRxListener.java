@@ -24,19 +24,21 @@ public class RfLinkBridgeRxListener implements RfLinkRxListener {
         if (isDebugLogMessage(message)) {
             // ignore Debug & OK response messages...
         } else {
-            boolean hasBeenProcessed = false;
-            // 1 - HANDLE DEVICE LISTENERS
+            boolean packetProcessed = false;
+            // 1 - HANDLE THING LISTENERS
             for (EventMessageListener eventMessageListener : bridge.getEventMessageListeners()) {
                 try {
-                    hasBeenProcessed = hasBeenProcessed
-                            || eventMessageListener.handleIncomingMessage(bridge.getThing().getUID(), message);
+                    if (eventMessageListener.canHandleMessage(message)) {
+                        packetProcessed = true;
+                        eventMessageListener.handleIncomingMessage(bridge.getThing().getUID(), message);
+                    }
                 } catch (Exception e) {
-                    logger.error("An exception occurred while calling the DeviceStatusListener for message " + message,
+                    logger.error("An exception occurred while calling the EventMessageListener for message " + message,
                             e);
                 }
             }
             // 2 - HANDLE DISCOVERY
-            if (!hasBeenProcessed) {
+            if (!packetProcessed) {
                 // current message is "unknown" (i.e. not handled by any existing Handler)
                 if (bridge.getDiscoveryService() != null && !bridge.getConfiguration().disableDiscovery) {
                     try {

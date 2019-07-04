@@ -17,16 +17,24 @@ import org.openhab.binding.rflink.message.RfLinkMessage;
  *
  * @author Pauli Anttila - Initial contribution
  * @author cartemere - Refactor to build the RfLinkDevice instance within the Listener
+ * @author cartemere - dissociate processing from eligibility
  */
 public interface EventMessageListener {
 
     /**
      * This method is called by the bridge when a message is received
      *
+     * @param message
+     * @return true if the message can be processed, false otherwise
+     */
+    public boolean canHandleMessage(RfLinkMessage incomingMessage);
+
+    /**
+     * This method is called by the bridge when a message is received
+     *
      * @param bridge
      * @param message
-     * @return true if the message has been processed, false otherwise
      * @throws Exception
      */
-    public boolean handleIncomingMessage(ThingUID bridge, RfLinkMessage message) throws Exception;
+    public void handleIncomingMessage(ThingUID bridge, RfLinkMessage message) throws Exception;
 }

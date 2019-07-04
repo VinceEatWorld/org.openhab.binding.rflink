@@ -107,28 +107,25 @@ public class RfLinkThingHandler extends BaseThingHandler implements EventMessage
     }
 
     @Override
-    public boolean handleIncomingMessage(ThingUID bridge, RfLinkMessage incomingMessage) throws Exception {
-        if (canHandleMessage(incomingMessage)) {
-            RfLinkEvent event = RfLinkEventFactory.createEventFromMessage(incomingMessage);
-            event.initializeFromMessage(config, incomingMessage);
-            processEchoPackets(event);
-            updateStatus(ThingStatus.ONLINE);
-            if (config.isRtsPositionTrackerEnabled()) {
-                handleRtsPositionTracker(this, event);
-            } else {
-                updateThingStates(event);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    private boolean canHandleMessage(RfLinkMessage incomingMessage) {
+    public boolean canHandleMessage(RfLinkMessage incomingMessage) {
         if (config != null && config.deviceId != null
                 && config.deviceId.equalsIgnoreCase(incomingMessage.getDeviceKey())) {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void handleIncomingMessage(ThingUID bridge, RfLinkMessage incomingMessage) throws Exception {
+        RfLinkEvent event = RfLinkEventFactory.createEventFromMessage(incomingMessage);
+        event.initializeFromMessage(config, incomingMessage);
+        processEchoPackets(event);
+        updateStatus(ThingStatus.ONLINE);
+        if (config.isRtsPositionTrackerEnabled()) {
+            handleRtsPositionTracker(this, event);
+        } else {
+            updateThingStates(event);
+        }
     }
 
     private void processOutputPackets(RfLinkEvent device) throws RfLinkException {
@@ -205,13 +202,6 @@ public class RfLinkThingHandler extends BaseThingHandler implements EventMessage
             logger.debug("Update channel: {}, state: {}", channel, map.get(channel));
             updateState(new ChannelUID(getThing().getUID(), channel), map.get(channel));
         }
-    }
-
-    private boolean isRtsPositionTrackerEnabled(RfLinkEvent device) {
-        if (device instanceof RfLinkRtsEvent && getConfiguration().isRtsPositionTrackerEnabled()) {
-            return true;
-        }
-        return false;
     }
 
     private void handleRtsPositionTracker(RfLinkThingHandler handler, RfLinkEvent device) {
