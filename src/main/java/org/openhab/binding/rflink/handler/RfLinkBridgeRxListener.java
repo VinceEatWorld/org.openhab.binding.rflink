@@ -2,14 +2,14 @@ package org.openhab.binding.rflink.handler;
 
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
-import org.openhab.binding.rflink.connector.RfLinkEventListener;
-import org.openhab.binding.rflink.internal.DeviceMessageListener;
+import org.openhab.binding.rflink.connector.RfLinkRxListener;
+import org.openhab.binding.rflink.internal.EventMessageListener;
 import org.openhab.binding.rflink.message.RfLinkMessage;
 import org.openhab.binding.rflink.packet.RfLinkPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RfLinkBridgeRxListener implements RfLinkEventListener {
+public class RfLinkBridgeRxListener implements RfLinkRxListener {
 
     private Logger logger = LoggerFactory.getLogger(RfLinkBridgeRxListener.class);
     RfLinkBridgeHandler bridge = null;
@@ -26,10 +26,10 @@ public class RfLinkBridgeRxListener implements RfLinkEventListener {
         } else {
             boolean hasBeenProcessed = false;
             // 1 - HANDLE DEVICE LISTENERS
-            for (DeviceMessageListener deviceStatusListener : bridge.getDeviceStatusListeners()) {
+            for (EventMessageListener eventMessageListener : bridge.getEventMessageListeners()) {
                 try {
                     hasBeenProcessed = hasBeenProcessed
-                            || deviceStatusListener.handleIncomingMessage(bridge.getThing().getUID(), message);
+                            || eventMessageListener.handleIncomingMessage(bridge.getThing().getUID(), message);
                 } catch (Exception e) {
                     logger.error("An exception occurred while calling the DeviceStatusListener for message " + message,
                             e);

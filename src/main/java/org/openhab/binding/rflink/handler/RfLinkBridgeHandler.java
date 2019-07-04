@@ -29,8 +29,8 @@ import org.openhab.binding.rflink.config.RfLinkBridgeConfiguration;
 import org.openhab.binding.rflink.connector.RfLinkConnectorInterface;
 import org.openhab.binding.rflink.connector.RfLinkSerialConnector;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
-import org.openhab.binding.rflink.internal.DeviceMessageListener;
-import org.openhab.binding.rflink.internal.discovery.RfLinkDeviceDiscoveryService;
+import org.openhab.binding.rflink.internal.EventMessageListener;
+import org.openhab.binding.rflink.internal.discovery.RfLinkThingDiscoveryService;
 import org.openhab.binding.rflink.packet.RfLinkPacket;
 import org.openhab.binding.rflink.packet.RfLinkPacketType;
 import org.slf4j.Logger;
@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * {@link RfLinkBridgeHandler} is the handler for a RFLink transceivers. All
- * {@link RfLinkHandler}s use the {@link RfLinkBridgeHandler} to execute the
+ * {@link RfLinkThingHandler}s use the {@link RfLinkBridgeHandler} to execute the
  * actual commands.
  *
  * @author Cyril Cauchois - Initial contribution
@@ -52,8 +52,8 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
 
     private RfLinkConnectorInterface connector = null;
 
-    private RfLinkDeviceDiscoveryService discoveryService = null;
-    private List<DeviceMessageListener> deviceStatusListeners = new CopyOnWriteArrayList<>();
+    private RfLinkThingDiscoveryService discoveryService = null;
+    private List<EventMessageListener> eventMessageListeners = new CopyOnWriteArrayList<>();
 
     private RfLinkBridgeConfiguration configuration = null;
     private ScheduledFuture<?> connectorTask = null;
@@ -198,30 +198,30 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
         }
     }
 
-    public boolean registerDeviceStatusListener(DeviceMessageListener deviceStatusListener) {
-        if (deviceStatusListener == null) {
-            throw new IllegalArgumentException("It's not allowed to pass a null deviceStatusListener.");
+    public boolean registerEventMessageListener(EventMessageListener eventMessageListener) {
+        if (eventMessageListener == null) {
+            throw new IllegalArgumentException("It's not allowed to pass a null eventMessageListener.");
         }
-        return deviceStatusListeners.contains(deviceStatusListener) ? false
-                : deviceStatusListeners.add(deviceStatusListener);
+        return eventMessageListeners.contains(eventMessageListener) ? false
+                : eventMessageListeners.add(eventMessageListener);
     }
 
-    public boolean unregisterDeviceStatusListener(DeviceMessageListener deviceStatusListener) {
-        if (deviceStatusListener == null) {
-            throw new IllegalArgumentException("It's not allowed to pass a null deviceStatusListener.");
+    public boolean removeEventMessageListener(EventMessageListener eventMessageListener) {
+        if (eventMessageListener == null) {
+            throw new IllegalArgumentException("It's not allowed to pass a null eventMessageListener.");
         }
-        return deviceStatusListeners.remove(deviceStatusListener);
+        return eventMessageListeners.remove(eventMessageListener);
     }
 
     public RfLinkBridgeConfiguration getConfiguration() {
         return configuration;
     }
 
-    public RfLinkDeviceDiscoveryService getDiscoveryService() {
+    public RfLinkThingDiscoveryService getDiscoveryService() {
         return discoveryService;
     }
 
-    public void setDiscoveryService(RfLinkDeviceDiscoveryService discoveryService) {
+    public void setDiscoveryService(RfLinkThingDiscoveryService discoveryService) {
         this.discoveryService = discoveryService;
     }
 
@@ -229,8 +229,8 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
         return connector;
     }
 
-    public List<DeviceMessageListener> getDeviceStatusListeners() {
-        return deviceStatusListeners;
+    public List<EventMessageListener> getEventMessageListeners() {
+        return eventMessageListeners;
     }
 
     @Override

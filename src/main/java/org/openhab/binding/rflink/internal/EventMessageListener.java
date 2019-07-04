@@ -12,13 +12,13 @@ import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.rflink.message.RfLinkMessage;
 
 /**
- * The {@link DeviceMessageListener} is notified when a message is received.
+ * The {@link EventMessageListener} is notified when a message is received.
  *
  *
  * @author Pauli Anttila - Initial contribution
  * @author cartemere - Refactor to build the RfLinkDevice instance within the Listener
  */
-public interface DeviceMessageListener {
+public interface EventMessageListener {
 
     /**
      * This method is called by the bridge when a message is received

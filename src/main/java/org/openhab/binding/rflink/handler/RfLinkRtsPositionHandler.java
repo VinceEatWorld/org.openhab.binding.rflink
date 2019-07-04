@@ -19,7 +19,7 @@ import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
 import org.openhab.binding.rflink.config.RfLinkDeviceConfiguration;
 import org.openhab.binding.rflink.event.RfLinkEvent;
-import org.openhab.binding.rflink.event.RfLinkDeviceFactory;
+import org.openhab.binding.rflink.event.RfLinkEventFactory;
 import org.openhab.binding.rflink.event.RfLinkRtsEvent;
 import org.openhab.binding.rflink.exceptions.RfLinkException;
 import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 /**
  * {@link RfLinkRtsPositionHandler} is a <b>Somfy RTS RollerShutters <u>POSITION</u> tracker</b>.
  * <p/>
- * This handler is triggered from the {@link RfLinkHandler}, when a {@link Command} is sent to an eligible
+ * This handler is triggered from the {@link RfLinkThingHandler}, when a {@link Command} is sent to an eligible
  * {@link RfLinkRtsEvent} (see {@link RfLinkDeviceConfiguration} configuration for more details).
  * <p/>
  * <b>THE CHALLENGE :</b> Somfy RollerShutters are "passive" things. They receive order from remote(s), but never
@@ -48,7 +48,7 @@ public class RfLinkRtsPositionHandler {
     private Logger logger = LoggerFactory.getLogger(RfLinkRtsPositionHandler.class);
 
     // the RtsShutterInfos identifier
-    private RfLinkHandler handler;
+    private RfLinkThingHandler handler;
     // the duration for the shutter to move from full open to full closed
     private long shutterEffectiveDuration;
 
@@ -66,7 +66,7 @@ public class RfLinkRtsPositionHandler {
     private ScheduledFuture<?> schedulerStatus = null;
     private ScheduledFuture<?> schedulerTarget = null;
 
-    public RfLinkRtsPositionHandler(RfLinkHandler handler) {
+    public RfLinkRtsPositionHandler(RfLinkThingHandler handler) {
         this.handler = handler;
         this.shutterEffectiveDuration = handler.getConfiguration().shutterDuration * 1000;
         updateShutterPositionState(positionFrom);
@@ -75,17 +75,17 @@ public class RfLinkRtsPositionHandler {
     /**
      * main entry point for the RtsPositionHandler
      *
-     * @param rtsDevice the input {@link RfLinkRtsEvent} event to handle (must be initialized, with enclosed
-     *                      {@link RfLinkRtsMessage} and {@link Command}
+     * @param rtsEvent the input {@link RfLinkRtsEvent} event to handle (must be initialized, with enclosed
+     *                     {@link RfLinkRtsMessage}, {@link RfLinkDeviceConfiguration} and {@link Command}
      */
-    public synchronized void handleCommand(RfLinkRtsEvent rtsDevice) {
+    public synchronized void handleCommand(RfLinkRtsEvent rtsEvent) {
         // STEP 0 : stop all scheduled task on previous command (if any)
         stopSchedulerStatus(true);
         stopSchedulerTarget(true);
         // STEP 1 : handle what was ongoing BEFORE the current Command
         handlePreviousCommand();
         // STEP 2 : handle the current Command
-        handleCurrentCommand(rtsDevice);
+        handleCurrentCommand(rtsEvent);
     }
 
     private void handlePreviousCommand() {
@@ -97,14 +97,14 @@ public class RfLinkRtsPositionHandler {
         }
     }
 
-    private void handleCurrentCommand(RfLinkRtsEvent rtsDevice) {
+    private void handleCurrentCommand(RfLinkRtsEvent rtsEvent) {
         timestampOnLastEvent = System.currentTimeMillis();
-        Command command = rtsDevice.getCommand();
-        rtsDevice.getMessage().getType();
-        logger.info("> received Intent=" + command + " for device " + rtsDevice);
+        Command command = rtsEvent.getCommand();
+        rtsEvent.getMessage().getType();
+        logger.info("> received Intent=" + command + " for event " + rtsEvent);
         if (StopMoveType.STOP.equals(command)) {
             commandProcessedEffective = command;
-            sendDeviceCommand(rtsDevice);
+            sendEventCommand(rtsEvent);
             // nothing to schedule
         } else if (command instanceof PercentType) {
             PercentType targetPosition = (PercentType) command;
@@ -114,17 +114,17 @@ public class RfLinkRtsPositionHandler {
             if (commandProcessedEffective instanceof UpDownType) {
                 long delayToTarget = computeDelayFromMoveValue(moveValue);
                 Command commandAtTarget = getCommandAtTargetPosition(targetPosition);
-                schedulePositionTarget(rtsDevice, delayToTarget, commandAtTarget);
+                schedulePositionTarget(rtsEvent, delayToTarget, commandAtTarget);
             }
         } else if (command instanceof UpDownType) {
             commandProcessedEffective = command;
             // PercentType targetPosition = getMoveFromDirectionCommand(command);
             // int moveValue = getMoveFromTargetPosition(targetPosition);
             // long delayToTarget = computeDelayFromMoveValue(moveValue);
-            sendDeviceCommand(rtsDevice);
+            sendEventCommand(rtsEvent);
             schedulePositionRefresh();
         } else {
-            logger.error("Provided RfLinkDevice " + rtsDevice + " does not hold a valid command : " + command);
+            logger.error("Provided RfLinkEvent " + rtsEvent + " does not hold a valid command : " + command);
         }
     }
 
@@ -157,8 +157,8 @@ public class RfLinkRtsPositionHandler {
         }, statusRefreshRate, statusRefreshRate, TimeUnit.MILLISECONDS);
     }
 
-    private void schedulePositionTarget(RfLinkEvent device, long delayTillCommandEnd, Command sendCommandAtTarget) {
-        if (isOutputDevice(device)) {
+    private void schedulePositionTarget(RfLinkEvent event, long delayTillCommandEnd, Command sendCommandAtTarget) {
+        if (isOutputEvent(event)) {
             // update position at target position
             logger.debug(
                     "SCHEDULE position TARGET at " + delayTillCommandEnd + "ms with command=" + sendCommandAtTarget);
@@ -183,28 +183,28 @@ public class RfLinkRtsPositionHandler {
         if (command != null) {
             commandProcessedEffective = command;
             try {
-                RfLinkEvent device = RfLinkDeviceFactory.createDeviceFromType(handler.getThing().getThingTypeUID());
-                device.initializeFromChannel(handler.getConfiguration(),
+                RfLinkEvent event = RfLinkEventFactory.createEventFromType(handler.getThing().getThingTypeUID());
+                event.initializeFromChannel(handler.getConfiguration(),
                         new ChannelUID(handler.getThing().getUID(), RfLinkBindingConstants.CHANNEL_SHUTTER), command);
-                sendDeviceCommand(device);
+                sendEventCommand(event);
             } catch (RfLinkException | RfLinkNotImpException e) {
                 logger.error("Could not send Command " + command, e);
             }
         }
     }
 
-    private void sendDeviceCommand(RfLinkEvent device) {
-        if (isOutputDevice(device)) {
+    private void sendEventCommand(RfLinkEvent event) {
+        if (isOutputEvent(event)) {
             try {
-                handler.getBridgeHandler().processPackets(device.buildOutputPackets());
+                handler.getBridgeHandler().processPackets(event.buildOutputPackets());
             } catch (RfLinkException e) {
-                logger.error("Could not send Device event " + device + " on bridge " + handler.getBridgeHandler(), e);
+                logger.error("Could not send Event " + event + " on bridge " + handler.getBridgeHandler(), e);
             }
         }
     }
 
-    private boolean isOutputDevice(RfLinkEvent device) {
-        return RfLinkPacketType.OUTPUT.equals(device.getMessage().getType());
+    private boolean isOutputEvent(RfLinkEvent event) {
+        return RfLinkPacketType.OUTPUT.equals(event.getMessage().getType());
     }
 
     private Command getDirectionCommandFromMove(int diff) {

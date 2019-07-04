@@ -22,8 +22,8 @@ import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
 import org.openhab.binding.rflink.handler.RfLinkBridgeHandler;
-import org.openhab.binding.rflink.handler.RfLinkHandler;
-import org.openhab.binding.rflink.internal.discovery.RfLinkDeviceDiscoveryService;
+import org.openhab.binding.rflink.handler.RfLinkThingHandler;
+import org.openhab.binding.rflink.internal.discovery.RfLinkThingDiscoveryService;
 import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +64,7 @@ public class RfLinkHandlerFactory extends BaseThingHandlerFactory {
             registerDeviceDiscoveryService(handler);
             return handler;
         } else if (supportsThingType(thingTypeUID)) {
-            return new RfLinkHandler(thing);
+            return new RfLinkThingHandler(thing);
         } else {
             logger.debug("RfLinkHandlerFactory createHandler() thing is not supported -> returning null");
         }
@@ -84,7 +84,7 @@ public class RfLinkHandlerFactory extends BaseThingHandlerFactory {
     }
 
     private void registerDeviceDiscoveryService(RfLinkBridgeHandler handler) {
-        RfLinkDeviceDiscoveryService discoveryService = new RfLinkDeviceDiscoveryService(handler);
+        RfLinkThingDiscoveryService discoveryService = new RfLinkThingDiscoveryService(handler);
         discoveryService.activate();
         this.discoveryServiceRegs.put(handler.getThing().getUID(), bundleContext
                 .registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<String, Object>()));

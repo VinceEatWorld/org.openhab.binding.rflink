@@ -50,7 +50,7 @@ public interface RfLinkConnectorInterface {
      * @param listener
      *                     Event listener instance to handle events.
      */
-    public void addEventListener(RfLinkEventListener listener);
+    public void addEventListener(RfLinkRxListener listener);
 
     /**
      * Procedure for remove event listener.
@@ -58,6 +58,6 @@ public interface RfLinkConnectorInterface {
      * @param listener
      *                     Event listener instance to remove.
      */
-    public void removeEventListener(RfLinkEventListener listener);
+    public void removeEventListener(RfLinkRxListener listener);
 
 }

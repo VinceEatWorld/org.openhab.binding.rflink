@@ -41,7 +41,7 @@ public class RfLinkSerialConnector implements RfLinkConnectorInterface, SerialPo
 
     private final Logger logger = LoggerFactory.getLogger(RfLinkSerialConnector.class);
 
-    private static List<RfLinkEventListener> _listeners = new ArrayList<RfLinkEventListener>();
+    private static List<RfLinkRxListener> _listeners = new ArrayList<RfLinkRxListener>();
 
     SerialPort serialPort;
 
@@ -175,20 +175,20 @@ public class RfLinkSerialConnector implements RfLinkConnectorInterface, SerialPo
     }
 
     @Override
-    public void addEventListener(RfLinkEventListener listener) {
+    public void addEventListener(RfLinkRxListener listener) {
         if (!_listeners.contains(listener)) {
             _listeners.add(listener);
         }
     }
 
     @Override
-    public void removeEventListener(RfLinkEventListener listener) {
+    public void removeEventListener(RfLinkRxListener listener) {
         _listeners.remove(listener);
     }
 
     private void sendPacketToListeners(RfLinkPacket packet) {
         try {
-            Iterator<RfLinkEventListener> iterator = _listeners.iterator();
+            Iterator<RfLinkRxListener> iterator = _listeners.iterator();
 
             while (iterator.hasNext()) {
                 iterator.next().packetReceived(packet);
@@ -201,7 +201,7 @@ public class RfLinkSerialConnector implements RfLinkConnectorInterface, SerialPo
 
     private void sendErrorToListeners(String error) {
         try {
-            Iterator<RfLinkEventListener> iterator = _listeners.iterator();
+            Iterator<RfLinkRxListener> iterator = _listeners.iterator();
 
             while (iterator.hasNext()) {
                 iterator.next().errorOccured(error);

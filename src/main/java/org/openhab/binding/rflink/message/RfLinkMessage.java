@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Cyril Cauchois - Initial contribution
  * @author cartemere - review Message management. add Reverse support for Switch/RTS
- * @author cartemere - Massive rework : split message vs device
+ * @author cartemere - Massive rework : split message vs event
  */
 public class RfLinkMessage {
 

@@ -15,7 +15,7 @@ import org.openhab.binding.rflink.packet.RfLinkPacket;
  *
  * @author Pauli Anttila - Initial contribution
  */
-public interface RfLinkEventListener {
+public interface RfLinkRxListener {
 
     /**
      * Procedure for receive raw data from RfLink controller.

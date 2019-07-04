@@ -28,12 +28,12 @@ import org.slf4j.LoggerFactory;
  * @author Arjan Mels - Order of added keys is retained and search form first to last (to allow overlapping keywords to
  *         be handled properly)
  */
-public class RfLinkDeviceFactory {
+public class RfLinkEventFactory {
 
-    private static Logger logger = LoggerFactory.getLogger(RfLinkDeviceFactory.class);
+    private static Logger logger = LoggerFactory.getLogger(RfLinkEventFactory.class);
 
-    private static LinkedHashMap<Predicate<RfLinkMessage>, Class<? extends RfLinkEvent>> MESSAGE_TO_DEVICE = new LinkedHashMap<>();
-    private static HashMap<ThingTypeUID, Class<? extends RfLinkEvent>> THINGTYPE_TO_CLASS = new HashMap<>();
+    private static LinkedHashMap<Predicate<RfLinkMessage>, Class<? extends RfLinkEvent>> MESSAGE_TO_EVENT_CLASS = new LinkedHashMap<>();
+    private static HashMap<ThingTypeUID, Class<? extends RfLinkEvent>> THINGTYPE_TO_EVENT_CLASS = new HashMap<>();
 
     /**
      * Mapping of the various message classes.
@@ -54,23 +54,23 @@ public class RfLinkDeviceFactory {
     private static void addMappingOfClass(Class<? extends RfLinkEvent> _class) {
         try {
             RfLinkEvent m = _class.newInstance();
-            MESSAGE_TO_DEVICE.put(m.eligibleMessageFunction(), _class);
-            THINGTYPE_TO_CLASS.put(m.getThingType(), _class);
+            MESSAGE_TO_EVENT_CLASS.put(m.eligibleMessageFunction(), _class);
+            THINGTYPE_TO_EVENT_CLASS.put(m.getThingType(), _class);
         } catch (InstantiationException | IllegalAccessException e) {
-            logger.error("Could not map RfLinkDevice type : " + _class);
+            logger.error("Could not map RfLinkEvent type : " + _class);
         }
     }
 
-    public static RfLinkEvent createDeviceFromMessage(RfLinkMessage message)
+    public static RfLinkEvent createEventFromMessage(RfLinkMessage message)
             throws RfLinkException, RfLinkNotImpException {
-        for (Map.Entry<Predicate<RfLinkMessage>, Class<? extends RfLinkEvent>> messageToDeviceEntry : MESSAGE_TO_DEVICE
+        for (Map.Entry<Predicate<RfLinkMessage>, Class<? extends RfLinkEvent>> messageToEventEntry : MESSAGE_TO_EVENT_CLASS
                 .entrySet()) {
-            if (messageToDeviceEntry.getKey().test(message)) {
-                Class<? extends RfLinkEvent> cl = messageToDeviceEntry.getValue();
+            if (messageToEventEntry.getKey().test(message)) {
+                Class<? extends RfLinkEvent> cl = messageToEventEntry.getValue();
                 try {
                     Constructor<?> c = cl.getConstructor();
-                    RfLinkEvent device = (RfLinkEvent) c.newInstance();
-                    return device;
+                    RfLinkEvent event = (RfLinkEvent) c.newInstance();
+                    return event;
                 } catch (Exception e) {
                     logger.error("Exception: {}", e);
                     throw new RfLinkException("unable to instanciate message object", e);
@@ -80,10 +80,10 @@ public class RfLinkDeviceFactory {
         throw new RfLinkNotImpException("No message implementation found for packet " + message.rawMessage);
     }
 
-    public static RfLinkEvent createDeviceFromType(ThingTypeUID thingType) throws RfLinkException {
-        if (THINGTYPE_TO_CLASS.containsKey(thingType)) {
+    public static RfLinkEvent createEventFromType(ThingTypeUID thingType) throws RfLinkException {
+        if (THINGTYPE_TO_EVENT_CLASS.containsKey(thingType)) {
             try {
-                Class<?> cl = THINGTYPE_TO_CLASS.get(thingType);
+                Class<?> cl = THINGTYPE_TO_EVENT_CLASS.get(thingType);
                 Constructor<?> c = cl.getConstructor();
                 return (RfLinkEvent) c.newInstance();
             } catch (Exception e) {

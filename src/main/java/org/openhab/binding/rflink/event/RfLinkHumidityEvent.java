@@ -48,20 +48,16 @@ public class RfLinkHumidityEvent extends RfLinkAbstractEvent {
 
     @Override
     public Map<String, State> getStates() {
-
         Map<String, State> map = new HashMap<>();
         map.put(RfLinkBindingConstants.CHANNEL_HUMIDITY, new DecimalType(humidity));
-
         return map;
     }
 
     @Override
     public String toString() {
         String str = "";
-
         str += super.toString();
         str += ", Humidity = " + humidity;
-
         return str;
     }
 

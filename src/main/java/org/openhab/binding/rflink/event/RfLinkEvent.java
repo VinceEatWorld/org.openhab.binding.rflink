@@ -23,7 +23,7 @@ import org.openhab.binding.rflink.message.RfLinkMessage;
 import org.openhab.binding.rflink.packet.RfLinkPacket;
 
 /**
- * This interface defines interface which every device class should implement.
+ * This interface defines interface which every event class should implement.
  *
  * @author Cyril Cauchois - Initial contribution
  * @author cartemere - refactoring + define Predicate
@@ -56,7 +56,7 @@ public interface RfLinkEvent {
 
     /**
      *
-     * @return the RfLinkMessage attached to the Device
+     * @return the RfLinkMessage attached to the Event
      */
     public RfLinkMessage getMessage();
 
@@ -89,7 +89,7 @@ public interface RfLinkEvent {
     Map<String, State> getStates();
 
     /**
-     * Get a specific State from the Device instance
+     * Get a specific State from the Event instance
      *
      * @param key the state keyword
      * @return the related State, null if not found
@@ -97,7 +97,7 @@ public interface RfLinkEvent {
     State getState(String key);
 
     /**
-     * Initializes Device for transmission message
+     * Initializes Event for transmission message
      *
      * @throws RfLinkException
      */
@@ -105,7 +105,7 @@ public interface RfLinkEvent {
             throws RfLinkNotImpException, RfLinkException;
 
     /**
-     * Initializes Device from reception message
+     * Initializes Event from reception message
      *
      * @param config  TODO
      * @param message the RfLink message received from the bridge

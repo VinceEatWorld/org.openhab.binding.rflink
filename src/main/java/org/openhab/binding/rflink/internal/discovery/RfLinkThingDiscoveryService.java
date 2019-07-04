@@ -17,14 +17,14 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
 import org.openhab.binding.rflink.event.RfLinkEvent;
-import org.openhab.binding.rflink.event.RfLinkDeviceFactory;
+import org.openhab.binding.rflink.event.RfLinkEventFactory;
 import org.openhab.binding.rflink.handler.RfLinkBridgeHandler;
 import org.openhab.binding.rflink.message.RfLinkMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link RfLinkDeviceDiscoveryService} class is used to discover RfLink
+ * The {@link RfLinkThingDiscoveryService} class is used to discover RfLink
  * devices that send messages to RfLink bridge.
  *
  * @author Pauli Anttila - Initial contribution
@@ -32,13 +32,13 @@ import org.slf4j.LoggerFactory;
  * @author Marvyn Zalewski - Added the ability to ignore discoveries
  * @author cartemere - refactor discovery for better error handling and reduce memory consumption
  */
-public class RfLinkDeviceDiscoveryService extends AbstractDiscoveryService {
+public class RfLinkThingDiscoveryService extends AbstractDiscoveryService {
 
-    private final Logger logger = LoggerFactory.getLogger(RfLinkDeviceDiscoveryService.class);
+    private final Logger logger = LoggerFactory.getLogger(RfLinkThingDiscoveryService.class);
 
     private RfLinkBridgeHandler bridgeHandler;
 
-    public RfLinkDeviceDiscoveryService(RfLinkBridgeHandler rflinkBridgeHandler) {
+    public RfLinkThingDiscoveryService(RfLinkBridgeHandler rflinkBridgeHandler) {
         super(null, 1, false);
         this.bridgeHandler = rflinkBridgeHandler;
     }
@@ -63,15 +63,15 @@ public class RfLinkDeviceDiscoveryService extends AbstractDiscoveryService {
     }
 
     public void discoverThing(ThingUID bridge, RfLinkMessage message) throws Exception {
-        RfLinkEvent device = RfLinkDeviceFactory.createDeviceFromMessage(message);
-        device.initializeFromMessage(null, message);
-        String id = device.getKey();
-        ThingTypeUID uid = device.getThingType();
+        RfLinkEvent event = RfLinkEventFactory.createEventFromMessage(message);
+        event.initializeFromMessage(null, message);
+        String id = event.getKey();
+        ThingTypeUID uid = event.getThingType();
         ThingUID thingUID = new ThingUID(uid, bridge, id.replace(RfLinkMessage.ID_DELIMITER, "_"));
         logger.trace("Adding new RfLink {} with id '{}' to smarthome inbox", thingUID, id);
-        String deviceType = device.getProtocol();
+        String deviceType = event.getProtocol();
         DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withLabel(deviceType)
-                .withProperty(RfLinkBindingConstants.DEVICE_ID, device.getKey()).withBridge(bridge).build();
+                .withProperty(RfLinkBindingConstants.DEVICE_ID, event.getKey()).withBridge(bridge).build();
         thingDiscovered(discoveryResult);
     }
 }
