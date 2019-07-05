@@ -68,11 +68,6 @@ public class RfLinkRtsEvent extends RfLinkAbstractEvent {
     @Override
     public Map<String, State> getStates() {
         Map<String, State> map = new HashMap<>();
-        if (shutter != null && !UnDefType.UNDEF.equals(shutter)) {
-            if (!(getConfig().isRtsPositionTrackerEnabled())) {
-                map.put(RfLinkBindingConstants.CHANNEL_SHUTTER, shutter);
-            }
-        }
         map.put(RfLinkBindingConstants.CHANNEL_COMMAND, command instanceof State ? (State) command : UnDefType.UNDEF);
         return map;
     }
@@ -83,7 +78,6 @@ public class RfLinkRtsEvent extends RfLinkAbstractEvent {
         Map<String, String> values = getMessage().getAttributes();
         if (values.containsKey(KEY_CMD)) {
             command = (Command) RfLinkTypeUtils.getTypeFromStringValue(values.get(KEY_CMD));
-            shutter = (State) RfLinkTypeUtils.getOnOffTypeFromType(command);
         }
     }
 
@@ -92,9 +86,6 @@ public class RfLinkRtsEvent extends RfLinkAbstractEvent {
             throws RfLinkNotImpException, RfLinkException {
         super.initializeFromChannel(config, channelUID, triggeredCommand);
         command = getCommandAction(channelUID.getId(), triggeredCommand);
-        if (!(getConfig().isRtsPositionTrackerEnabled())) {
-            shutter = (State) RfLinkTypeUtils.getOnOffTypeFromType(command);
-        }
     }
 
     @Override
