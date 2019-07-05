@@ -133,6 +133,9 @@ public class RfLinkThingHandler extends BaseThingHandler implements EventMessage
 
     private void processEchoPackets(RfLinkEvent event) throws RfLinkException {
         Collection<RfLinkPacket> echoPackets = event.buildEchoPackets();
+        if (echoPackets != null && !echoPackets.isEmpty()) {
+            logger.info("Echo {} => {}", event, echoPackets);
+        }
         bridgeHandler.processPackets(echoPackets);
     }
 

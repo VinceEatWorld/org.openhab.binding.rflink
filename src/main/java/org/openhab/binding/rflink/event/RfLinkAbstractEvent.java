@@ -41,9 +41,6 @@ public abstract class RfLinkAbstractEvent implements RfLinkEvent {
     public void initializeFromMessage(RfLinkDeviceConfiguration config, RfLinkMessage message) {
         setConfig(config);
         this.message = message;
-        if (getConfig() != null && getConfig().hasEcho()) {
-            // must "echo" the input command to the linked DeviceId
-        }
     }
 
     @Override
@@ -91,12 +88,10 @@ public abstract class RfLinkAbstractEvent implements RfLinkEvent {
         if (config.hasEcho()) {
             if (getMessage() != null) {
                 packet = getMessage().buildEchoPacket(config.echoPattern);
-            } else {
-                // no initial message (why are we here ?!?)
+                if (packet != null) {
+                    return Collections.singletonList(packet);
+                }
             }
-        }
-        if (packet != null) {
-            return Collections.singletonList(packet);
         }
         return Collections.emptyList();
 
