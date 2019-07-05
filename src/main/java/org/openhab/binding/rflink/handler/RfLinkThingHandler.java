@@ -9,7 +9,6 @@
 package org.openhab.binding.rflink.handler;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -52,7 +51,7 @@ public class RfLinkThingHandler extends BaseThingHandler implements EventMessage
     public static final int TIME_BETWEEN_COMMANDS = 50;
     private Logger logger = LoggerFactory.getLogger(RfLinkThingHandler.class);
 
-    private static Map<String, RfLinkRtsPositionHandler> shutterInfosMap = new HashMap<>();
+    private RfLinkRtsPositionHandler rtsPositionTracker = null;
 
     private RfLinkBridgeHandler bridgeHandler;
 
@@ -90,9 +89,8 @@ public class RfLinkThingHandler extends BaseThingHandler implements EventMessage
                     RfLinkEvent event = RfLinkEventFactory.createEventFromType(getThing().getThingTypeUID());
                     event.initializeFromChannel(config, channelUID, command);
                     processEchoPackets(event);
-                    if (config.isRtsPositionTrackerEnabled()) {
+                    if (handleRtsPositionTracker(this, event)) {
                         // need specific handling : the command is processed by the tracker
-                        handleRtsPositionTracker(this, event);
                     } else {
                         processOutputPackets(event);
                         updateThingStates(event);
@@ -121,23 +119,20 @@ public class RfLinkThingHandler extends BaseThingHandler implements EventMessage
         event.initializeFromMessage(config, incomingMessage);
         processEchoPackets(event);
         updateStatus(ThingStatus.ONLINE);
-        if (config.isRtsPositionTrackerEnabled()) {
-            handleRtsPositionTracker(this, event);
-        } else {
-            updateThingStates(event);
-        }
+        handleRtsPositionTracker(this, event);
+        updateThingStates(event);
     }
 
-    private void processOutputPackets(RfLinkEvent device) throws RfLinkException {
+    private void processOutputPackets(RfLinkEvent event) throws RfLinkException {
         int repeats = Math.min(Math.max(getConfiguration().repeats, 1), 20);
-        Collection<RfLinkPacket> packets = device.buildOutputPackets();
+        Collection<RfLinkPacket> packets = event.buildOutputPackets();
         for (int i = 0; i < repeats; i++) {
             bridgeHandler.processPackets(packets);
         }
     }
 
-    private void processEchoPackets(RfLinkEvent device) throws RfLinkException {
-        Collection<RfLinkPacket> echoPackets = device.buildEchoPackets();
+    private void processEchoPackets(RfLinkEvent event) throws RfLinkException {
+        Collection<RfLinkPacket> echoPackets = event.buildEchoPackets();
         bridgeHandler.processPackets(echoPackets);
     }
 
@@ -204,28 +199,24 @@ public class RfLinkThingHandler extends BaseThingHandler implements EventMessage
         }
     }
 
-    private void handleRtsPositionTracker(RfLinkThingHandler handler, RfLinkEvent device) {
+    private boolean handleRtsPositionTracker(RfLinkThingHandler handler, RfLinkEvent event) {
+        boolean processed = false;
         try {
-            RfLinkRtsPositionHandler shutterInfos = getShutterInfos(handler, device);
-            shutterInfos.handleCommand((RfLinkRtsEvent) device);
+            if (config.isRtsPositionTrackerEnabled()) {
+                getPositionTracker(handler).handleCommand((RfLinkRtsEvent) event);
+                processed = true;
+            }
         } catch (Exception ex) {
-            logger.error("OOOPS, processing device=" + device, ex);
+            logger.error("RTS position tracker failed, processing event=" + event, ex);
         }
+        return processed;
     }
 
-    private RfLinkRtsPositionHandler getShutterInfos(RfLinkThingHandler handler, RfLinkEvent device) {
-        RfLinkRtsPositionHandler shutterInfos = shutterInfosMap.get(device.getKey());
-        if (shutterInfos == null) {
-            synchronized (shutterInfosMap) {
-                shutterInfos = shutterInfosMap.get(device.getKey());
-                if (shutterInfos == null) {
-                    logger.debug("RTSHandler: create RtsHandler for " + device.getKey() + " on " + getThing().getUID());
-                    shutterInfos = new RfLinkRtsPositionHandler(handler);
-                    shutterInfosMap.put(device.getKey(), shutterInfos);
-                }
-            }
+    private RfLinkRtsPositionHandler getPositionTracker(RfLinkThingHandler handler) {
+        if (rtsPositionTracker == null) {
+            rtsPositionTracker = new RfLinkRtsPositionHandler(handler);
         }
-        return shutterInfos;
+        return rtsPositionTracker;
     }
 
     @Override
