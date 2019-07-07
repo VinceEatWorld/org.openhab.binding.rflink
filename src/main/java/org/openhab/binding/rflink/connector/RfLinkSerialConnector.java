@@ -216,9 +216,16 @@ public class RfLinkSerialConnector implements RfLinkConnectorInterface, SerialPo
     public void serialEvent(SerialPortEvent oEvent) {
         if (oEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
             try {
-                String inputLine = input.readLine();
-                logger.debug("<<< {}", inputLine);
-                sendPacketToListeners(new RfLinkPacket(RfLinkPacketType.INPUT, inputLine));
+                boolean hasData = true;
+                while (hasData) {
+                    String inputLine = input.readLine();
+                    if (inputLine == null) {
+                        hasData = false;
+                    } else {
+                        logger.debug("<<< {}", inputLine);
+                        sendPacketToListeners(new RfLinkPacket(RfLinkPacketType.INPUT, inputLine));
+                    }
+                }
             } catch (Exception e) {
                 logger.error("{}", e.toString());
             }
