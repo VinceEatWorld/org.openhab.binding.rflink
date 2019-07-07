@@ -72,9 +72,9 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
         } else if (command instanceof StringType) {
             try {
                 RfLinkPacketType packetType = null;
-                if ("output".equals(channelUID.getId())) {
+                if ("rawdata".equals(channelUID.getId())) {
                     packetType = RfLinkPacketType.OUTPUT;
-                } else if ("echo".equals(channelUID.getId())) {
+                } else if ("echodata".equals(channelUID.getId())) {
                     packetType = RfLinkPacketType.ECHO;
                 } else {
                     logger.error("ChannelUID" + channelUID + " not supported on Bridge");
