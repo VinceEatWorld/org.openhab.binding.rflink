@@ -88,7 +88,7 @@ Plugin configuration and Object setup (Bridge, Thing, Channel) can be performed 
 Bridge config:
 
 | Thing Config | Type    | Description  | Required | Example |
-|------------|--------------|--------------|--------------|
+|------------|--------------|--------------|--------------|----------|
 | serialPort | String | Path to Device | Y | "/dev/tty.wchusbserial1410" |
 | baudRate | Integer | baudRate of the Gateway | N : Default=57600 | 57600 |
 | keepAlivePeriod | Integer | Send "PING" command to the bridge at the specified period (in second). Only enabled if > 0 | N : Default=0 | 55 |
@@ -340,7 +340,7 @@ On the Home Automation Software side :
 |-------------|--------------|
 | OpenHab Bridge | RfLinkBridgeHandler |
 | OpenHab Thing | RfLinkHandler instance (one per Thing)
-| OpenHab Action | RfLinkDevice instance (one created for each action/event) |
+| OpenHab Action | RfLinkEvent instance (one created for each action/event) |
 | Message (RAW) | RfLinkPacket |
 | Message (Decomposed) | RfLinkMessage |
 
@@ -351,18 +351,18 @@ On the Home Automation Software side :
 4. the **RfLinkPacket** is then wrapped and decomposed in a **RfLinkMessage** (protocol, AdressId, Switch, attributesMap, etc.)
 5. the **RfLinkBridgeRxListener** then finds out which **RfLinkHandler** instance is responsible for this Message (based on the Protocol, Address, SwitchId, etc.)
 6. the processing is delegated to the related **RfLinkHandler** 
-7. the **RfLinkHandler** creates the **RfLinkDevice** from the **RfLinkMessage**. The Device :
-    1. is a dedicated instance (can be **RfLinkRtsDevice** or **RfLinkWindDevice** or ...)
+7. the **RfLinkHandler** creates the **RfLinkEvent** from the **RfLinkMessage**. The Event :
+    1. is a dedicated instance (can be **RfLinkRtsEvent** or **RfLinkWindEvent** or ...)
     2. holds the specialized functional behavior
 8. the **RfLinkHandler** triggers the required operations on the message :
     1. echo command if needed (based on the Thing configuration)
-    2. update the OpenHab thing states according to the **RfLinkDevice** attributes
+    2. update the OpenHab thing states according to the **RfLinkEvent** attributes
 
 
 ## Development Steps
 1. Add you thing description XML file in the ESH-INF/thing/ directory
-2. Implement your message in the org.openhab.binding.rflink.device package, as an implementation of **RfLinkDevice**
-3. Override the *RfLinkDevice.eligibleMessageFunction()* to define which kind of messages are handled.
+2. Implement your message in the org.openhab.binding.rflink.event package, as an implementation of **RfLinkEvent**
+3. Override the *RfLinkEvent.eligibleMessageFunction()* to define which kind of messages are handled.
 4. Add your new channels names in the RfLinkBindingConstants class
 5. Add a ThingTypeUID constant (same class)
 6. Add this new constant in the SUPPORTED\_DEVICE\_THING\_TYPES\_UIDS list (same class)
