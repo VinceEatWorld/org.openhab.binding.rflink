@@ -115,12 +115,14 @@ public class RfLinkThingHandler extends BaseThingHandler implements EventMessage
 
     @Override
     public void handleIncomingMessage(ThingUID bridge, RfLinkMessage incomingMessage) throws Exception {
-        RfLinkEvent event = RfLinkEventFactory.createEventFromMessage(incomingMessage);
-        event.initializeFromMessage(config, incomingMessage);
-        processEchoPackets(event);
-        updateStatus(ThingStatus.ONLINE);
-        handleRtsPositionTracker(this, event);
-        updateThingStates(event);
+        if (incomingMessage.isEligibleForProcessing()) {
+            RfLinkEvent event = RfLinkEventFactory.createEventFromMessage(incomingMessage);
+            event.initializeFromMessage(config, incomingMessage);
+            processEchoPackets(event);
+            updateStatus(ThingStatus.ONLINE);
+            handleRtsPositionTracker(this, event);
+            updateThingStates(event);
+        }
     }
 
     private void processOutputPackets(RfLinkEvent event) throws RfLinkException {

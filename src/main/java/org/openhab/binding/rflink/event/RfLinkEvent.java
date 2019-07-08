@@ -115,4 +115,11 @@ public interface RfLinkEvent {
      */
     void initializeFromMessage(RfLinkDeviceConfiguration config, RfLinkMessage message)
             throws RfLinkNotImpException, RfLinkException;
+
+    /**
+     * String representation of the current Event (used for Item discovery)
+     * 
+     * @return the current event as String
+     */
+    String getLabel();
 }

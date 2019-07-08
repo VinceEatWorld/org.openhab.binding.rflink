@@ -34,37 +34,38 @@ public class RfLinkBridgeRxListener implements RfLinkRxListener {
     @Override
     public synchronized void packetReceived(RfLinkPacket rfLinkPacket) {
         RfLinkMessage message = new RfLinkMessage(rfLinkPacket);
-        if (isDebugLogMessage(message)) {
-            // ignore Debug & OK response messages...
-        } else {
-            boolean packetProcessed = false;
-            // 1 - HANDLE THING LISTENERS
-            for (EventMessageListener eventMessageListener : bridge.getEventMessageListeners()) {
-                try {
-                    if (eventMessageListener.canHandleMessage(message)) {
-                        packetProcessed = true;
-                        eventMessageListener.handleIncomingMessage(bridge.getThing().getUID(), message);
-                    }
-                } catch (Exception e) {
-                    logger.error("An exception occurred while calling the EventMessageListener for message " + message,
-                            e);
-                }
-            }
-            // 2 - HANDLE DISCOVERY
-            if (!packetProcessed) {
-                // current message is "unknown" (i.e. not handled by any existing Handler)
-                if (bridge.getDiscoveryService() != null && !bridge.getConfiguration().disableDiscovery) {
+        if (message.isEligibleForProcessing() || message.isEligibleForDiscovery()) {
+            if (isDebugLogMessage(message)) {
+                // ignore Debug & OK response messages...
+            } else {
+                boolean packetProcessed = false;
+                // 1 - HANDLE THING LISTENERS
+                for (EventMessageListener eventMessageListener : bridge.getEventMessageListeners()) {
                     try {
-                        bridge.getDiscoveryService().discoverThing(bridge.getThing().getUID(), message);
+                        if (eventMessageListener.canHandleMessage(message)) {
+                            packetProcessed = true;
+                            eventMessageListener.handleIncomingMessage(bridge.getThing().getUID(), message);
+                        }
                     } catch (Exception e) {
                         logger.error(
-                                "An exception occurred while registring message to the DiscoveryService : " + message,
+                                "An exception occurred while calling the EventMessageListener for message " + message,
                                 e);
                     }
+                }
+                // 2 - HANDLE DISCOVERY
+                if (!packetProcessed) {
+                    discover(message);
                 }
             }
         }
         bridge.updateStatus(ThingStatus.ONLINE, ThingStatusDetail.NONE);
+    }
+
+    private void discover(RfLinkMessage message) {
+        // current message has not been processed
+        if (bridge.getDiscoveryService() != null) {
+            bridge.getDiscoveryService().discoverThing(bridge.getThing().getUID(), message);
+        }
     }
 
     @Override

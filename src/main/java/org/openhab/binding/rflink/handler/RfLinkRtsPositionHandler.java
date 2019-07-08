@@ -100,7 +100,7 @@ public class RfLinkRtsPositionHandler {
     private void handleCurrentCommand(RfLinkRtsEvent rtsEvent) {
         timestampOnLastEvent = System.currentTimeMillis();
         Command command = rtsEvent.getCommand();
-        rtsEvent.getMessage().getType();
+        rtsEvent.getMessage().getPacketType();
         logger.info("> received Intent=" + command + " for event " + rtsEvent);
         if (StopMoveType.STOP.equals(command)) {
             commandProcessedEffective = command;
@@ -204,7 +204,7 @@ public class RfLinkRtsPositionHandler {
     }
 
     private boolean isOutputEvent(RfLinkEvent event) {
-        return RfLinkPacketType.OUTPUT.equals(event.getMessage().getType());
+        return RfLinkPacketType.OUTPUT.equals(event.getMessage().getPacketType());
     }
 
     private Command getDirectionCommandFromMove(int diff) {

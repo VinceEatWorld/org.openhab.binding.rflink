@@ -122,8 +122,12 @@ public class RfLinkSerialConnector implements RfLinkConnectorInterface, SerialPo
         logger.debug("Disconnecting");
 
         if (serialPort != null) {
-            serialPort.removeEventListener();
-            logger.debug("Serial port event listener stopped");
+            try {
+                serialPort.removeEventListener();
+                logger.debug("Serial port event listener stopped");
+            } catch (Exception e) {
+                logger.error("Could not remove EventListener on serialPort {}", e.toString());
+            }
         }
 
         if (output != null) {

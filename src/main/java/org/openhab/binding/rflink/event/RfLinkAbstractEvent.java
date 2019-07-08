@@ -140,4 +140,9 @@ public abstract class RfLinkAbstractEvent implements RfLinkEvent {
         return "" + getClass().getSimpleName() + " [message=" + message + ", config=" + config + ", ]";
     }
 
+    @Override
+    public String getLabel() {
+        return getThingType().getId() + message.getLabel();
+    }
+
 }

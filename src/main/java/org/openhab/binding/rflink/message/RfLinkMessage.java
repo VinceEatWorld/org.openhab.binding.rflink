@@ -29,13 +29,16 @@ import org.slf4j.LoggerFactory;
  * @author Cyril Cauchois - Initial contribution
  * @author cartemere - review Message management. add Reverse support for Switch/RTS
  * @author cartemere - Massive rework : split message vs event
+ * @author cartemere - support RTS SHOW messages
  */
 public class RfLinkMessage {
 
     private Logger logger = LoggerFactory.getLogger(RfLinkMessage.class);
 
     public final static String FIELDS_DELIMITER = ";";
+    public final static String RTS_SHOW_DELIMITER = " ";
     public final static String VALUE_DELIMITER = "=";
+    public final static String RTS_SHOW_VALUE_DELIMITER = ":";
     public final static String ID_DELIMITER = "-";
 
     private final static String NODE_NUMBER_FROM_GATEWAY = "20";
@@ -45,16 +48,18 @@ public class RfLinkMessage {
     private static final String DEVICE_MASK_6 = "000000";
 
     public String rawMessage;
-    private RfLinkPacketType type;
+    private RfLinkPacketType packetType;
     private byte seqNbr = 0;
-    private String protocol; // protocol Name (RTS, X10, etc.)
-    protected String deviceId; // device Identifier (Rolling code, etc.)
-    protected String deviceSubId; // switch Identifier (SWITCH=XX, etc.)
+    private String protocol = null; // protocol Name (RTS, X10, etc.)
+    protected String deviceId = null; // device Identifier (Rolling code, etc.)
+    protected String deviceSubId = null; // switch Identifier (SWITCH=XX, etc.)
     protected Map<String, String> attributes = new HashMap<>();
+    private boolean eligibleForProcessing = false;
+    private boolean eligibleForDiscovery = false;
 
     public RfLinkMessage(RfLinkDeviceConfiguration config, ChannelUID channelUID, Command command)
             throws RfLinkNotImpException, RfLinkException {
-        type = RfLinkPacketType.OUTPUT;
+        packetType = RfLinkPacketType.OUTPUT;
         String[] elements = config.deviceId.split(ID_DELIMITER);
         if (elements.length > 1) {
             protocol = elements[0];
@@ -62,37 +67,59 @@ public class RfLinkMessage {
             if (elements.length > 2) {
                 deviceSubId = elements[2];
             }
+            eligibleForProcessing = true;
         }
     }
 
     public RfLinkMessage(RfLinkPacket packet) {
         rawMessage = packet.getPacket();
-        type = packet.getType();
-        final String[] elements = packet.getPacket().split(FIELDS_DELIMITER, 4);
-        final int size = elements.length;
-        // Every message should have at least 5 parts
-        // Example : 20;31;Mebus;ID=c201;TEMP=00cf;
-        // Example : 20;02;RTS;ID=82e8ac;SWITCH=01;CMD=DOWN;
-        // Example : 20;07;Debug;RTS P1;a729000068622e;
-        if (size >= 3) {
-            // first element should be "20"
-            if (NODE_NUMBER_FROM_GATEWAY.equals(elements[0])) {
+        packetType = packet.getType();
+        if (isStandardInputMessage()) {
+            String[] elements = packet.getPacket().split(FIELDS_DELIMITER, 4);
+            int size = elements.length;
+            // Every message should have at least 5 parts
+            // Example : 20;31;Mebus;ID=c201;TEMP=00cf;
+            // Example : 20;02;RTS;ID=82e8ac;SWITCH=01;CMD=DOWN;
+            // Example : 20;07;Debug;RTS P1;a729000068622e;
+            if (size == 4 && !elements[3].isEmpty()) {
+                // first element should be "20"
                 seqNbr = (byte) Integer.parseInt(elements[1], 16);
                 protocol = RfLinkDataParser.cleanString(elements[2]);
                 // build the key>value map
-                if (size == 4) {
-                    extractAttributes(attributes, elements[3]);
-                }
+                extractAttributes(attributes, elements[3], FIELDS_DELIMITER, VALUE_DELIMITER);
                 deviceId = attributes.get("ID");
                 deviceSubId = attributes.get("SWITCH");
+                eligibleForProcessing = true;
+                eligibleForDiscovery = true;
+            }
+        } else if (isRTSShowInputMessage()) {
+            // RfLink protocol is "odd" on RTS show command : we must preprocess the String to get something parseable
+            String formatedPacket = packet.getPacket().replaceAll(": ", ":");
+            String[] elements = formatedPacket.split(" ", 2); // take all KeyValues after the "RTS" flag
+            protocol = RfLinkDataParser.cleanString(elements[0]);
+            extractAttributes(attributes, elements[1], RTS_SHOW_DELIMITER, RTS_SHOW_VALUE_DELIMITER);
+            deviceId = attributes.get("Address");
+            deviceSubId = "0"; // switch=0 for RTS (see RfLink protocol reference)
+            if (!"FFFFFF".equalsIgnoreCase(deviceId) && !"FFFF".equalsIgnoreCase("RC")) {
+                // ignore non initialized rows in the EPROM
+                eligibleForDiscovery = true;
             }
         }
     }
 
-    public static void extractAttributes(Map<String, String> attributesMap, String attributesAsString) {
-        String[] elements = attributesAsString.split(FIELDS_DELIMITER);
+    private boolean isStandardInputMessage() {
+        return getRawMessage() != null && getRawMessage().startsWith(NODE_NUMBER_FROM_GATEWAY);
+    }
+
+    private boolean isRTSShowInputMessage() {
+        return getRawMessage() != null && getRawMessage().startsWith("RTS");
+    }
+
+    public void extractAttributes(Map<String, String> attributesMap, String attributesAsString, String fieldsDelimiter,
+            String valueDelimiter) {
+        String[] elements = attributesAsString.split(fieldsDelimiter);
         for (String element : elements) {
-            String[] keyValue = element.split(VALUE_DELIMITER, 2);
+            String[] keyValue = element.split(valueDelimiter, 2);
             if (keyValue.length > 1) {
                 // Raw values are stored, and will be decoded by sub implementations
                 attributesMap.put(keyValue[0], keyValue[1]);
@@ -102,15 +129,22 @@ public class RfLinkMessage {
 
     @Override
     public String toString() {
-        return getType() + ":" + getDeviceKey();
+        return getLabel();
+    }
+
+    public String getLabel() {
+        if (isRTSShowInputMessage()) {
+            return "[" + attributes.get("Record") + "] " + getDeviceKey() + " RC=" + attributes.get("RC");
+        }
+        return getDeviceKey();
     }
 
     public String getRawMessage() {
         return rawMessage;
     }
 
-    public RfLinkPacketType getType() {
-        return type;
+    public RfLinkPacketType getPacketType() {
+        return packetType;
     }
 
     public String getDeviceKey() {
@@ -136,6 +170,14 @@ public class RfLinkMessage {
 
     public String getDeviceSubId() {
         return deviceSubId;
+    }
+
+    public boolean isEligibleForProcessing() {
+        return eligibleForProcessing;
+    }
+
+    public boolean isEligibleForDiscovery() {
+        return eligibleForDiscovery;
     }
 
     public Map<String, String> getAttributes() {
@@ -191,7 +233,7 @@ public class RfLinkMessage {
         if (getRawMessage() != null) {
             String echoPacket = getRawMessage();
             Map<String, String> overridenAttributes = new HashMap<>();
-            RfLinkMessage.extractAttributes(overridenAttributes, echoPattern);
+            extractAttributes(overridenAttributes, echoPattern, FIELDS_DELIMITER, VALUE_DELIMITER);
             for (String overridenAttributeKey : overridenAttributes.keySet()) {
                 String sourceAttribute = overridenAttributeKey + "=" + getAttributes().get(overridenAttributeKey);
                 String targetAttribute = overridenAttributeKey + "=" + overridenAttributes.get(overridenAttributeKey);

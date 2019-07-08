@@ -8,6 +8,7 @@
  */
 package org.openhab.binding.rflink.internal.discovery;
 
+import java.util.Collections;
 import java.util.Set;
 
 import org.eclipse.smarthome.config.discovery.AbstractDiscoveryService;
@@ -18,8 +19,12 @@ import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.rflink.RfLinkBindingConstants;
 import org.openhab.binding.rflink.event.RfLinkEvent;
 import org.openhab.binding.rflink.event.RfLinkEventFactory;
+import org.openhab.binding.rflink.exceptions.RfLinkException;
+import org.openhab.binding.rflink.exceptions.RfLinkNotImpException;
 import org.openhab.binding.rflink.handler.RfLinkBridgeHandler;
 import org.openhab.binding.rflink.message.RfLinkMessage;
+import org.openhab.binding.rflink.packet.RfLinkPacket;
+import org.openhab.binding.rflink.packet.RfLinkPacketType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +36,7 @@ import org.slf4j.LoggerFactory;
  * @author Daan Sieben - Modified for RfLink
  * @author Marvyn Zalewski - Added the ability to ignore discoveries
  * @author cartemere - refactor discovery for better error handling and reduce memory consumption
+ * @author cartemere - support RTS SHOW input events
  */
 public class RfLinkThingDiscoveryService extends AbstractDiscoveryService {
 
@@ -59,19 +65,38 @@ public class RfLinkThingDiscoveryService extends AbstractDiscoveryService {
 
     @Override
     protected void startScan() {
-        // this can be ignored here as we discover devices from received messages
+        if (bridgeHandler.isDiscoveryEnabled()) {
+            try {
+                logger.info("Start scanning registered RTS remotes...");
+                RfLinkPacket packet = new RfLinkPacket(RfLinkPacketType.OUTPUT, "10;RTSSHOW;");
+                bridgeHandler.processPackets(Collections.singleton(packet));
+            } catch (RfLinkException e) {
+                logger.error("Unable to process scanning : ", e);
+            }
+        }
     }
 
-    public void discoverThing(ThingUID bridge, RfLinkMessage message) throws Exception {
-        RfLinkEvent event = RfLinkEventFactory.createEventFromMessage(message);
-        event.initializeFromMessage(null, message);
-        String id = event.getKey();
-        ThingTypeUID uid = event.getThingType();
-        ThingUID thingUID = new ThingUID(uid, bridge, id.replace(RfLinkMessage.ID_DELIMITER, "_"));
-        logger.trace("Adding new RfLink {} with id '{}' to smarthome inbox", thingUID, id);
-        String deviceType = event.getProtocol();
-        DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withLabel(deviceType)
-                .withProperty(RfLinkBindingConstants.DEVICE_ID, event.getKey()).withBridge(bridge).build();
-        thingDiscovered(discoveryResult);
+    public void discoverThing(ThingUID bridge, RfLinkMessage message) {
+        if (bridgeHandler.isDiscoveryEnabled()) {
+            try {
+                RfLinkEvent event = RfLinkEventFactory.createEventFromMessage(message);
+                event.initializeFromMessage(null, message);
+                String identifier = event.getKey();
+                String label = event.getLabel();
+                ThingTypeUID uid = event.getThingType();
+                ThingUID thingUID = new ThingUID(uid, bridge, identifier.replace(RfLinkMessage.ID_DELIMITER, "_"));
+                DiscoveryResultBuilder resultBuilder = DiscoveryResultBuilder.create(thingUID);
+                resultBuilder.withLabel(label);
+                resultBuilder.withProperty(RfLinkBindingConstants.DEVICE_ID, identifier);
+                resultBuilder.withBridge(bridge);
+                DiscoveryResult discoveryResult = resultBuilder.build();
+                logger.info("Adding {} with id '{}' and label '{}' to smarthome inbox", thingUID, identifier, label);
+                thingDiscovered(discoveryResult);
+            } catch (RfLinkException e) {
+                logger.error("Unable to discover thing {} ", message, e);
+            } catch (RfLinkNotImpException e) {
+                logger.error("Unable to discover thing {} ", message, e);
+            }
+        }
     }
 }

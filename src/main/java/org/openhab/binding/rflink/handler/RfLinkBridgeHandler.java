@@ -239,4 +239,8 @@ public class RfLinkBridgeHandler extends BaseBridgeHandler {
         super.updateStatus(status, statusDetail);
     }
 
+    public boolean isDiscoveryEnabled() {
+        return !getConfiguration().disableDiscovery;
+    }
+
 }
